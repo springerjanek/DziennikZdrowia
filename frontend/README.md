@@ -19,7 +19,8 @@ npm run dev
 
 Aplikacja uruchamia się domyślnie na `http://localhost:5173`.
 
-Logowanie wymaga backendu (`../backend`, domyślnie `http://localhost:8080`).
+Logowanie wymaga backendu (`../backend`, domyślnie `http://localhost:8080`),
+a backend bazy PostgreSQL: `docker compose up -d` w głównym katalogu repo.
 Vite przekazuje do niego wszystkie zapytania `/api/*` (proxy w `vite.config.ts`),
 więc front i API działają pod jednym adresem, a sesja jest w ciasteczku HttpOnly.
 Inny adres backendu: `BACKEND_URL=http://... npm run dev`.

@@ -1,0 +1,23 @@
+# Lokalna baza dla backendu: docker compose up -d
+# Uzytkownik i haslo z pliku .env (wzor: .env.example) - te same czyta backend.
+services:
+  db:
+    image: postgres:17
+    container_name: dziennik-db
+    environment:
+      POSTGRES_DB: dziennik_zdrowia
+      POSTGRES_USER: ${DB_USERNAME:-dziennik}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Ustaw DB_PASSWORD w pliku .env (wzor - .env.example)}
+    ports:
+      - "5432:5432"
+    volumes:
+      # Dane przetrwaja restart i `docker compose down`; kasuje je dopiero `down -v`.
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d dziennik_zdrowia"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  db-data:
