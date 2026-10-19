@@ -1,41 +1,45 @@
 import { z } from "zod";
+import { ApiError, apiFetch } from "@/lib/api";
 import type { AuthUser } from "./types";
 
-const SESSION_KEY = "dz.session.v1";
+// Sesja zyje na backendzie (ciasteczko HttpOnly) - front nie trzyma tokenu
+// ani danych usera w localStorage.
 
-const authUserSchema = z.object({
-  id: z.string().min(1),
-  email: z.string().min(3).max(320),
-  name: z.string().min(1).max(200),
-  pictureUrl: z.string().max(2048).nullable(),
-});
+const authUserSchema = z
+  .object({
+    id: z.string().min(1),
+    email: z.string().min(3).max(320),
+    name: z.string().max(200).nullable(),
+    pictureUrl: z.string().max(2048).nullable(),
+  })
+  .transform(
+    (user): AuthUser => ({ ...user, name: user.name ?? user.email }),
+  );
 
-export function loadSession(): AuthUser | null {
+async function parseUser(response: Response): Promise<AuthUser> {
+  return authUserSchema.parse(await response.json());
+}
+
+// Backend weryfikuje ID token od Google i zaklada sesje.
+export async function signInWithGoogle(credential: string): Promise<AuthUser> {
+  const response = await apiFetch("/api/auth/google", {
+    method: "POST",
+    body: { credential },
+  });
+  return parseUser(response);
+}
+
+export async function fetchCurrentUser(): Promise<AuthUser | null> {
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (raw === null) {
+    return await parseUser(await apiFetch("/api/me"));
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
       return null;
     }
-
-    const result = authUserSchema.safeParse(JSON.parse(raw));
-    return result.success ? result.data : null;
-  } catch {
-    return null;
+    throw error;
   }
 }
 
-export function saveSession(user: AuthUser): void {
-  try {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-  } catch {
-    // tryb prywatny - sesja przetrwa tylko do przeladowania
-  }
-}
-
-export function clearSession(): void {
-  try {
-    localStorage.removeItem(SESSION_KEY);
-  } catch {
-    // jw.
-  }
+export async function signOut(): Promise<void> {
+  await apiFetch("/api/auth/logout", { method: "POST" });
 }

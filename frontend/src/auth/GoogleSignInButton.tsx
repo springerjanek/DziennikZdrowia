@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { readGoogleIdToken } from "./googleIdToken";
-import type { AuthUser } from "./types";
 
 type CredentialResponse = {
   credential?: string;
@@ -59,10 +57,11 @@ function loadGoogleScript(): Promise<void> {
 }
 
 type GoogleSignInButtonProps = {
-  onSignedIn: (user: AuthUser) => void;
+  // ID token od Google; do zweryfikowania przez backend.
+  onCredential: (credential: string) => void;
 };
 
-export function GoogleSignInButton({ onSignedIn }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ onCredential }: GoogleSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -90,12 +89,7 @@ export function GoogleSignInButton({ onSignedIn }: GoogleSignInButtonProps) {
               setLoadError("Logowanie nie zwróciło tokenu.");
               return;
             }
-            const user = readGoogleIdToken(response.credential);
-            if (user === null) {
-              setLoadError("Nie udało się odczytać danych konta.");
-              return;
-            }
-            onSignedIn(user);
+            onCredential(response.credential);
           },
         });
 
@@ -116,7 +110,7 @@ export function GoogleSignInButton({ onSignedIn }: GoogleSignInButtonProps) {
     return () => {
       cancelled = true;
     };
-  }, [clientId, onSignedIn]);
+  }, [clientId, onCredential]);
 
   return (
     <div className="flex flex-col items-center gap-3">

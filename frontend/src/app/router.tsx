@@ -20,8 +20,11 @@ export const router = createBrowserRouter([
   {
     path: "/dashboard",
     lazy: async () => {
-      const { DashboardPage } = await import("@/pages/DashboardPage");
-      return { Component: DashboardPage };
+      const [{ DashboardPage }, { dashboardLoader }] = await Promise.all([
+        import("@/pages/DashboardPage"),
+        import("@/pages/dashboardLoader"),
+      ]);
+      return { Component: DashboardPage, loader: dashboardLoader };
     },
   },
 ]);
