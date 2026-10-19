@@ -1,24 +1,23 @@
-import { Link, Navigate, useNavigate } from "react-router";
-import { clearSession, loadSession } from "@/auth/session";
+import { Link, useLoaderData, useNavigate } from "react-router";
+import { signOut } from "@/auth/session";
 import { evaluate } from "@/domain";
 import { draftToProfile } from "@/features/onboarding/draft";
 import { loadDraft } from "@/lib/draftStorage";
 import { formatInterval } from "@/lib/plural";
+import type { dashboardLoader } from "./dashboardLoader";
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const user = loadSession();
-
-  if (user === null) {
-    return <Navigate to="/konto" replace />;
-  }
+  const user = useLoaderData<typeof dashboardLoader>();
 
   const profile = draftToProfile(loadDraft());
   const recommendations = profile === null ? [] : evaluate(profile);
 
-  function signOut() {
-    clearSession();
-    void navigate("/konto", { replace: true });
+  function handleSignOut() {
+    // Nawet gdy backend nie odpowie, wracamy do logowania.
+    void signOut()
+      .catch(() => undefined)
+      .then(() => navigate("/konto", { replace: true }));
   }
 
   return (
@@ -39,7 +38,7 @@ export function DashboardPage() {
         </div>
         <button
           type="button"
-          onClick={signOut}
+          onClick={handleSignOut}
           className="rounded-field border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-100"
         >
           Wyloguj
