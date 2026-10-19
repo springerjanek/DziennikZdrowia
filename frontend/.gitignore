@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.env
+
+# Zrzuty ruchu sieciowego - moga zawierac ciasteczka sesyjne
+*.har
