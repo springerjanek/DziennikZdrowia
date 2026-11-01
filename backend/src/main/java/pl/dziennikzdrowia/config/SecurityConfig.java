@@ -42,6 +42,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/google").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/csrf").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
+                        // Wyszukiwarka lekow jest w onboardingu, przed logowaniem; wykaz MZ jest publiczny.
+                        .requestMatchers(HttpMethod.GET, "/api/medications/search").permitAll()
                         // Inaczej każdy błąd (400, 403) zamienia się w 401 przy przekierowaniu na /error.
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())

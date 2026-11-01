@@ -28,6 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<fastexcel.version>0.20.2</fastexcel.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -54,6 +55,12 @@
 			<!-- Weryfikacja podpisu ID tokenu Google (JWT + klucze JWKS). -->
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-oauth2-jose</artifactId>
+		</dependency>
+		<dependency>
+			<!-- Czytanie zalacznika XLSX z obwieszczenia MZ (wykaz lekow refundowanych). -->
+			<groupId>org.dhatim</groupId>
+			<artifactId>fastexcel-reader</artifactId>
+			<version>${fastexcel.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
@@ -95,6 +102,13 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<!-- Generuje maly XLSX w testach parsera zamiast trzymac w repo prawdziwy zalacznik. -->
+			<groupId>org.dhatim</groupId>
+			<artifactId>fastexcel</artifactId>
+			<version>${fastexcel.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
