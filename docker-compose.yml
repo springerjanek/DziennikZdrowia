@@ -1,5 +1,5 @@
-# Lokalna baza dla backendu: docker compose up -d
-# Uzytkownik i haslo z pliku .env (wzor: .env.example) - te same czyta backend.
+name: dziennik-zdrowia
+
 services:
   db:
     image: postgres:17
@@ -11,13 +11,47 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # Dane przetrwaja restart i `docker compose down`; kasuje je dopiero `down -v`.
       - db-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d dziennik_zdrowia"]
       interval: 5s
       timeout: 3s
       retries: 10
+
+  backend:
+    image: ghcr.io/springerjanek/dziennikzdrowia-backend:${IMAGE_TAG:-dev}
+    build: ./backend
+    container_name: dziennik-backend
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/dziennik_zdrowia
+      DB_USERNAME: ${DB_USERNAME:-dziennik}
+      DB_PASSWORD: ${DB_PASSWORD}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Ustaw GOOGLE_CLIENT_ID w pliku .env (wzor - .env.example)}
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      # Pierwsze 40s nieudanych prob sie nie liczy - Spring tyle wstaje.
+      start_period: 40s
+
+  frontend:
+    image: ghcr.io/springerjanek/dziennikzdrowia-frontend:${IMAGE_TAG:-dev}
+    build:
+      context: ./frontend
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Ustaw GOOGLE_CLIENT_ID w pliku .env (wzor - .env.example)}
+    container_name: dziennik-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
 
 volumes:
   db-data:
