@@ -19,7 +19,7 @@ public class MedicationSearchController {
         this.searchService = searchService;
     }
 
-    /** {@code q} to nazwa handlowa albo substancja (po łacinie, jak w wykazie: "metforminum"). */
+    /** {@code q} to nazwa handlowa albo substancja, po łacinie ("metforminum") albo po polsku ("metformina"). */
     @GetMapping("/search")
     public List<MedicationSearchResult> search(@RequestParam String q,
                                                @RequestParam(defaultValue = "20") int limit) {

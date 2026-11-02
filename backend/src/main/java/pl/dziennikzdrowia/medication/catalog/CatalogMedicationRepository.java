@@ -1,6 +1,5 @@
 package pl.dziennikzdrowia.medication.catalog;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,14 +15,6 @@ import java.util.Optional;
 public interface CatalogMedicationRepository extends JpaRepository<CatalogMedication, Long> {
 
     List<CatalogMedication> findByGtinIn(Collection<String> gtins);
-
-    @Query("""
-            select m.gtin from CatalogMedication m
-            where lower(m.name) like :pattern escape '\\'
-               or lower(m.activeSubstance) like :pattern escape '\\'
-            group by m.gtin, m.name
-            order by m.name""")
-    List<String> searchGtins(@Param("pattern") String pattern, Pageable pageable);
 
     @Query("select distinct m.name from CatalogMedication m where lower(m.name) like :pattern escape '\\'")
     List<String> findNamesLike(@Param("pattern") String pattern);
