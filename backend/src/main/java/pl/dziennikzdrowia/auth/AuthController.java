@@ -3,7 +3,6 @@ package pl.dziennikzdrowia.auth;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -51,9 +50,6 @@ public class AuthController {
         this.sessionAuthenticationStrategy = new CompositeSessionAuthenticationStrategy(List.of(
                 new ChangeSessionIdAuthenticationStrategy(),
                 new CsrfAuthenticationStrategy(csrfTokenRepository)));
-    }
-
-    public record GoogleSignInRequest(@NotBlank String credential) {
     }
 
     /**

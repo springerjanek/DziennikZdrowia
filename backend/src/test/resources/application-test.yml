@@ -1,0 +1,20 @@
+# Testy dzialaja na bazie H2 w pamieci, bez PostgreSQL.
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  # Testy przygotowuja wlasne dane, bez data.sql.
+  sql:
+    init:
+      mode: never
+
+app:
+  google:
+    client-id: test-client-id
+  # Testy nie pobieraja obwieszczenia z gov.pl.
+  reimbursement:
+    import-enabled: false
