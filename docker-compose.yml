@@ -27,6 +27,9 @@ services:
       DB_USERNAME: ${DB_USERNAME:-dziennik}
       DB_PASSWORD: ${DB_PASSWORD}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Ustaw GOOGLE_CLIENT_ID w pliku .env (wzor - .env.example)}
+      # "local" = dane testowe + logowanie testera (patrz .env.example). Domyslnie puste.
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
+      DEV_TESTER_EMAIL: ${DEV_TESTER_EMAIL:-}
     ports:
       - "8080:8080"
     depends_on:
@@ -46,6 +49,8 @@ services:
       context: ./frontend
       args:
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Ustaw GOOGLE_CLIENT_ID w pliku .env (wzor - .env.example)}
+        # "true" = przycisk "Zaloguj jako tester". Domyslnie puste, wtedy przycisku nie ma w bundlu.
+        VITE_DEV_LOGIN: ${VITE_DEV_LOGIN:-}
     container_name: dziennik-frontend
     ports:
       - "5173:80"

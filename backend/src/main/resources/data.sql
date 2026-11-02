@@ -1,10 +1,10 @@
--- Dane testowe do lokalnego developmentu. Uruchamiane tylko przy DB_SEED=always (patrz application.yml),
+-- Dane testowe do lokalnego developmentu. Uruchamiane tylko z profilem "local" (application-local.yml),
 -- po utworzeniu tabel przez Hibernate. Kazdy INSERT jest idempotentny, bo skrypt leci przy kazdym starcie.
--- Ci uzytkownicy nie zaloguja sie przez Google (google_sub jest zmyslony) - sluza do podgladu danych w bazie.
+-- Jeden tester ze wszystkimi typami harmonogramu. Przez Google sie nie zaloguje (google_sub jest zmyslony),
+-- ale z profilem "local" wchodzi sie na niego przez POST /api/auth/dev-login (DevAuthController).
 -- GTIN-y sa z obwieszczenia MZ na 1.10.2026, wiec po imporcie wykazu leki pokazuja refundacje.
 
 INSERT INTO users (id, google_sub, email, name, picture_url) VALUES
-    ('00000000-0000-0000-0000-000000000001', 'seed-ania', 'ania@example.com', 'Ania Testowa', NULL),
     ('00000000-0000-0000-0000-000000000002', 'seed-jan', 'jan@example.com', 'Jan Testowy', NULL)
 ON CONFLICT (id) DO NOTHING;
 
@@ -12,14 +12,14 @@ INSERT INTO user_medications
     (id, user_id, gtin, name, active_substance, schedule_type, interval_days, max_daily_doses, start_date, end_date, notes)
 VALUES
     -- Codziennie, rano i wieczorem inna dawka.
-    ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001',
+    ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002',
      '05909990126316', 'Metformax 500', 'Metformini hydrochloridum', 'DAILY', NULL, NULL, '2026-10-01', NULL, NULL),
     -- Codziennie na czczo.
-    ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001',
+    ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000002',
      '05909991051228', 'Euthyrox N 50', 'Levothyroxinum natricum', 'DAILY', NULL, NULL, '2026-10-01', NULL,
      'Pol godziny przed sniadaniem'),
     -- W razie potrzeby, lek dodany recznie (bez GTIN = pelna cena).
-    ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001',
+    ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000002',
      NULL, 'Ibuprom', 'Ibuprofen', 'AS_NEEDED', NULL, 3, '2026-10-01', NULL, NULL),
     -- Wybrane dni tygodnia.
     ('10000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000002',
@@ -30,7 +30,11 @@ VALUES
     -- Insulina, rozne dawki o roznych porach.
     ('10000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000002',
      '05909990895717', 'Lantus', 'Insulinum glarginum', 'DAILY', NULL, NULL, '2026-10-01', NULL, NULL)
-ON CONFLICT (id) DO NOTHING;
+-- DO UPDATE zamiast DO NOTHING: bazy z dawnym seedem mialy te leki rozdzielone miedzy dwoch uzytkownikow.
+ON CONFLICT (id) DO UPDATE SET user_id = EXCLUDED.user_id;
+
+-- Dawny drugi uzytkownik testowy. Jego leki przeszly wyzej do testera, wiec nic go juz nie trzyma.
+DELETE FROM users WHERE google_sub = 'seed-ania';
 
 INSERT INTO user_medication_weekdays (user_medication_id, weekday)
 SELECT '10000000-0000-0000-0000-000000000004', 'MONDAY'

@@ -52,6 +52,11 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 		<dependency>
+			<!-- Sesje w bazie zamiast w pamieci: restart backendu nie wylogowuje. -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-session-jdbc</artifactId>
+		</dependency>
+		<dependency>
 			<!-- Weryfikacja podpisu ID tokenu Google (JWT + klucze JWKS). -->
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-oauth2-jose</artifactId>

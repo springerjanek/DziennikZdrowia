@@ -22,11 +22,21 @@ spring:
     # data.sql dopiero po tym, jak Hibernate zalozy tabele.
     defer-datasource-initialization: true
 
-  # Dane testowe z data.sql (uzytkownicy i ich leki). Tylko lokalnie: DB_SEED=always w .env.
-  # Skrypt jest idempotentny, wiec moze sie wykonywac przy kazdym starcie.
+  # Dane testowe z data.sql wlacza profil "local" (application-local.yml), razem z logowaniem testera.
   sql:
     init:
-      mode: ${DB_SEED:never}
+      mode: never
+
+  # Sesje logowania w bazie (tabele SPRING_SESSION*), a nie w pamieci backendu:
+  # restart, devtools i `docker compose down/up` nie wylogowuja. Czas zycia: server.servlet.session.timeout.
+  session:
+    jdbc:
+      initialize-schema: always
+
+  # Profil z .env (SPRING_PROFILES_ACTIVE=local) przy uruchamianiu backendu poza Dockerem.
+  # Sama zmienna srodowiskowa dziala i bez tego, ale klucz z pliku .env Spring traktuje doslownie.
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:}
 
 server:
   port: 8080
