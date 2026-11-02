@@ -1,0 +1,72 @@
+spring:
+  application:
+    name: dziennik-zdrowia-backend
+
+  # Lokalne zmienne (DB_PASSWORD, GOOGLE_CLIENT_ID...) z pliku .env w glownym katalogu repo
+  # (wzor: .env.example). Dwie sciezki, bo backend bywa uruchamiany z backend/ albo z katalogu repo.
+  # Zmienne srodowiskowe maja pierwszenstwo przed .env.
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:../.env[.properties]
+
+  # Baza danych (PostgreSQL). Haslo tylko z DB_PASSWORD - bez wartosci domyslnej w repo.
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/dziennik_zdrowia}
+    username: ${DB_USERNAME:dziennik}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    open-in-view: false
+    # data.sql dopiero po tym, jak Hibernate zalozy tabele.
+    defer-datasource-initialization: true
+
+  # Dane testowe z data.sql (uzytkownicy i ich leki). Tylko lokalnie: DB_SEED=always w .env.
+  # Skrypt jest idempotentny, wiec moze sie wykonywac przy kazdym starcie.
+  sql:
+    init:
+      mode: ${DB_SEED:never}
+
+server:
+  port: 8080
+  servlet:
+    # Ciasteczko sesji. Na produkcji (HTTPS) ustaw SESSION_COOKIE_SECURE=true.
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: ${SESSION_COOKIE_SECURE:false}
+      timeout: ${SESSION_TIMEOUT:7d}
+  error:
+    # Nie wysylaj stack trace'ow w odpowiedziach (devtools domyslnie je wlacza).
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  # Adresy frontendu, ktore moga wolac API (oddzielone przecinkami).
+  # Domyslnie typowe porty dev: Vite (5173), React/Next (3000), Angular (4200).
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:4200}
+
+  # Logowanie Google. Ten sam Client ID co VITE_GOOGLE_CLIENT_ID na froncie.
+  # Client secret NIE jest potrzebny: weryfikujemy ID token kluczami publicznymi Google.
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+
+  # Wykaz lekow refundowanych z obwieszczen Ministra Zdrowia (nowe co ok. 3 miesiace).
+  # Importer raz na dobe sprawdza, czy na liscie pojawilo sie nowsze obwieszczenie.
+  reimbursement:
+    import-enabled: ${REIMBURSEMENT_IMPORT_ENABLED:true}
+    listing-url: https://www.gov.pl/web/zdrowie/obwieszczenia-ministra-zdrowia-lista-lekow-refundowanych
+    initial-delay: PT10S
+    check-interval: PT24H
+
+  # Slownik nazw lekow z API NFZ (leki, ktore byly kiedys refundowane w aptekach).
+  nfz:
+    api-url: https://api.nfz.gov.pl/app-stat-api-ra
