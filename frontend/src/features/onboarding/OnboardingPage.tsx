@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
+import { MedicalDisclaimer } from "@/components/MedicalDisclaimer";
 import { useNavigate } from "react-router";
 import { ProgressBar } from "./ProgressBar";
 import { StepConditions } from "./steps/StepConditions";
@@ -129,6 +130,8 @@ export function OnboardingPage() {
           {isLastStep ? "Gotowe" : "Dalej"}
         </button>
       </div>
+
+      <MedicalDisclaimer />
     </main>
   );
 }

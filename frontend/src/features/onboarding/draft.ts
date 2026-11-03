@@ -6,6 +6,7 @@ import {
   evaluate,
   MAX_CYCLE_LENGTH_DAYS,
   medicationEntrySchema,
+  medicationKey,
   MIN_CYCLE_LENGTH_DAYS,
   qualifiesForFree,
   sexSchema,
@@ -116,8 +117,9 @@ export function addMedication(
   entries: MedicationEntry[],
   medication: Medication,
 ): MedicationEntry[] {
+  const key = medicationKey(medication);
   for (const entry of entries) {
-    if (entry.medication.name === medication.name) {
+    if (medicationKey(entry.medication) === key) {
       return entries;
     }
   }
@@ -126,18 +128,18 @@ export function addMedication(
 
 export function removeMedication(
   entries: MedicationEntry[],
-  name: string,
+  key: string,
 ): MedicationEntry[] {
-  return entries.filter((entry) => entry.medication.name !== name);
+  return entries.filter((entry) => medicationKey(entry.medication) !== key);
 }
 
 export function setMedicationUsage(
   entries: MedicationEntry[],
-  name: string,
+  key: string,
   usage: MedicationUsage,
 ): MedicationEntry[] {
   return entries.map((entry) =>
-    entry.medication.name === name ? { ...entry, usage } : entry,
+    medicationKey(entry.medication) === key ? { ...entry, usage } : entry,
   );
 }
 

@@ -20,11 +20,28 @@ export const router = createBrowserRouter([
   {
     path: "/dashboard",
     lazy: async () => {
-      const [{ DashboardPage }, { dashboardLoader }] = await Promise.all([
-        import("@/pages/DashboardPage"),
-        import("@/pages/dashboardLoader"),
-      ]);
-      return { Component: DashboardPage, loader: dashboardLoader };
+      const [{ DashboardLayout }, { dashboardLayoutLoader }] =
+        await Promise.all([
+          import("@/pages/DashboardLayout"),
+          import("@/pages/dashboardLayoutLoader"),
+        ]);
+      return { Component: DashboardLayout, loader: dashboardLayoutLoader };
     },
+    children: [
+      {
+        index: true,
+        lazy: async () => {
+          const [{ DashboardHomePage }, { dashboardHomeLoader }] =
+            await Promise.all([
+              import("@/pages/DashboardHomePage"),
+              import("@/pages/dashboardHomeLoader"),
+            ]);
+          return {
+            Component: DashboardHomePage,
+            loader: dashboardHomeLoader,
+          };
+        },
+      },
+    ],
   },
 ]);
