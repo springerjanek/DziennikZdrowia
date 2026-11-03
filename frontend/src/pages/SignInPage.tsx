@@ -1,19 +1,37 @@
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router";
 import { GoogleSignInButton } from "@/auth/GoogleSignInButton";
-import { signInWithGoogle } from "@/auth/session";
+import { signInAsTester, signInWithGoogle } from "@/auth/session";
+import type { AuthUser } from "@/auth/types";
+import { saveProfile } from "@/data/profile";
+import { draftToProfile } from "@/features/onboarding/draft";
+import { loadDraft } from "@/lib/draftStorage";
+
+// Vite podmienia ta zmienna na literal przy buildzie, wiec bez VITE_DEV_LOGIN=true
+// caly przycisk wypada z bundla.
+const devLoginEnabled = import.meta.env.VITE_DEV_LOGIN === "true";
+
+// Logowanie to pierwszy moment, w ktorym mamy gdzie zapisac profil z onboardingu.
+// Nieudany zapis nie blokuje wejscia - dashboard sam poprosi wtedy o uzupelnienie.
+async function sendDraftProfile(): Promise<void> {
+  const profile = draftToProfile(loadDraft());
+  if (profile === null) {
+    return;
+  }
+  await saveProfile(profile).catch(() => undefined);
+}
 
 export function SignInPage() {
   const navigate = useNavigate();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // useCallback: GoogleSignInButton inicjalizuje GIS od nowa przy zmianie tej funkcji.
-  const handleCredential = useCallback(
-    (credential: string) => {
+  const handleSignIn = useCallback(
+    (request: Promise<AuthUser>) => {
       setPending(true);
       setError(null);
-      signInWithGoogle(credential)
+      request
+        .then(() => sendDraftProfile())
         .then(() => navigate("/dashboard", { replace: true }))
         .catch(() => {
           setError("Nie udało się zalogować. Spróbuj ponownie.");
@@ -21,6 +39,14 @@ export function SignInPage() {
         });
     },
     [navigate],
+  );
+
+  // useCallback: GoogleSignInButton inicjalizuje GIS od nowa przy zmianie tej funkcji.
+  const handleCredential = useCallback(
+    (credential: string) => {
+      handleSignIn(signInWithGoogle(credential));
+    },
+    [handleSignIn],
   );
 
   return (
@@ -36,6 +62,17 @@ export function SignInPage() {
       </div>
 
       <GoogleSignInButton onCredential={handleCredential} />
+
+      {devLoginEnabled && (
+        <button
+          type="button"
+          onClick={() => handleSignIn(signInAsTester())}
+          disabled={pending}
+          className="mx-auto inline-flex min-h-11 items-center rounded-field border border-dashed border-slate-400 px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400"
+        >
+          Zaloguj jako tester (tylko lokalnie)
+        </button>
+      )}
 
       {pending && (
         <p role="status" className="text-center text-sm text-slate-600">

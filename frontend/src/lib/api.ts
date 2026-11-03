@@ -1,6 +1,8 @@
 // Wszystkie zapytania ida pod wzgledny adres /api (w dev przez proxy Vite),
 // wiec ciasteczko sesji jest "nasze" i nie trzeba SameSite=None.
 
+import type { z } from "zod";
+
 const CSRF_COOKIE = "XSRF-TOKEN";
 const CSRF_HEADER = "X-XSRF-TOKEN";
 
@@ -31,7 +33,9 @@ async function csrfToken(): Promise<string> {
     return existing;
   }
 
-  const response = await fetch("/api/auth/csrf", { credentials: "same-origin" });
+  const response = await fetch("/api/auth/csrf", {
+    credentials: "same-origin",
+  });
   const token = readCookie(CSRF_COOKIE);
   if (!response.ok || token === null) {
     throw new ApiError(response.status);
@@ -42,11 +46,12 @@ async function csrfToken(): Promise<string> {
 type ApiRequest = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
+  signal?: AbortSignal;
 };
 
 export async function apiFetch(
   path: string,
-  { method = "GET", body }: ApiRequest = {},
+  { method = "GET", body, signal }: ApiRequest = {},
 ): Promise<Response> {
   const headers = new Headers({ Accept: "application/json" });
   if (body !== undefined) {
@@ -61,10 +66,20 @@ export async function apiFetch(
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
     credentials: "same-origin",
+    signal,
   });
 
   if (!response.ok) {
     throw new ApiError(response.status);
   }
   return response;
+}
+
+export async function apiJson<T>(
+  path: string,
+  schema: z.ZodType<T>,
+  request: ApiRequest = {},
+): Promise<T> {
+  const response = await apiFetch(path, request);
+  return schema.parse(await response.json());
 }
