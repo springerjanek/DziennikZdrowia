@@ -42,6 +42,17 @@ export const router = createBrowserRouter([
           };
         },
       },
+      {
+        path: "leki",
+        lazy: async () => {
+          const [{ MedicationsPage }, { medicationsLoader }] =
+            await Promise.all([
+              import("@/pages/MedicationsPage"),
+              import("@/pages/medicationsLoader"),
+            ]);
+          return { Component: MedicationsPage, loader: medicationsLoader };
+        },
+      },
     ],
   },
 ]);

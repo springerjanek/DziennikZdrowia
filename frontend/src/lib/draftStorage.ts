@@ -1,11 +1,17 @@
 import type { z } from "zod";
 import {
+  emptyMedicationDraft,
+  medicationDraftSchema,
+  type MedicationDraft,
+} from "@/features/medications/draft";
+import {
   emptyDraft,
   onboardingDraftSchema,
   type OnboardingDraft,
 } from "@/features/onboarding/draft";
 
 const ONBOARDING_KEY = "dz.onboarding.draft.v1";
+const MEDICATION_KEY = "dz.medication.draft.v1";
 
 function read<T extends object>(
   key: string,
@@ -59,4 +65,16 @@ export function saveDraft(draft: OnboardingDraft): void {
 
 export function clearDraft(): void {
   remove(ONBOARDING_KEY);
+}
+
+export function loadMedicationDraft(): MedicationDraft {
+  return read(MEDICATION_KEY, medicationDraftSchema, emptyMedicationDraft());
+}
+
+export function saveMedicationDraft(draft: MedicationDraft): void {
+  write(MEDICATION_KEY, draft);
+}
+
+export function clearMedicationDraft(): void {
+  remove(MEDICATION_KEY);
 }
