@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,6 +36,9 @@ class AuthControllerTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
     @MockitoBean
     private GoogleIdTokenVerifier googleIdTokenVerifier;
 
@@ -56,11 +58,11 @@ class AuthControllerTest {
 
     @Test
     void signInCreatesUserAndSession() throws Exception {
-        MockHttpSession session = signIn();
+        Cookie session = signIn();
 
         assertThat(userRepository.findByGoogleSub("sub-1")).isPresent();
 
-        mockMvc.perform(get("/api/me").session(session))
+        mockMvc.perform(get("/api/me").cookie(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("ania@example.com"))
                 .andExpect(jsonPath("$.name").value("Ania"));
@@ -92,22 +94,39 @@ class AuthControllerTest {
     }
 
     @Test
-    void logoutEndsSession() throws Exception {
-        MockHttpSession session = signIn();
+    void sessionIsStoredInDatabase() throws Exception {
+        // Dzięki temu restart backendu nie wylogowuje (Spring Session JDBC).
+        Cookie session = signIn();
 
-        mockMvc.perform(withCsrf(post("/api/auth/logout")).session(session))
-                .andExpect(status().isNoContent());
-
-        mockMvc.perform(get("/api/me").session(session)).andExpect(status().isUnauthorized());
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(*) from SPRING_SESSION where PRINCIPAL_NAME is not null", Integer.class))
+                .isPositive();
+        mockMvc.perform(get("/api/me").cookie(session)).andExpect(status().isOk());
     }
 
-    private MockHttpSession signIn() throws Exception {
-        return (MockHttpSession) mockMvc.perform(withCsrf(post("/api/auth/google"))
+    @Test
+    void devLoginDoesNotExistWithoutLocalProfile() throws Exception {
+        mockMvc.perform(withCsrf(post("/api/auth/dev-login")))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void logoutEndsSession() throws Exception {
+        Cookie session = signIn();
+
+        mockMvc.perform(withCsrf(post("/api/auth/logout")).cookie(session))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/me").cookie(session)).andExpect(status().isUnauthorized());
+    }
+
+    private Cookie signIn() throws Exception {
+        return mockMvc.perform(withCsrf(post("/api/auth/google"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(BODY))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNotEmpty())
-                .andReturn().getRequest().getSession(false);
+                .andReturn().getResponse().getCookie("SESSION");
     }
 
     private MockHttpServletRequestBuilder withCsrf(MockHttpServletRequestBuilder request) throws Exception {

@@ -1,0 +1,13 @@
+# Profil do lokalnego developmentu: SPRING_PROFILES_ACTIVE=local w .env. Nigdy na produkcji.
+# Wlacza naraz dane testowe i logowanie na nie (POST /api/auth/dev-login, DevAuthController),
+# wiec nie da sie miec jednego bez drugiego.
+spring:
+  sql:
+    init:
+      # data.sql jest idempotentny, wiec moze sie wykonywac przy kazdym starcie.
+      mode: always
+
+app:
+  dev:
+    # Konto Google, ktore przy logowaniu dostaje konto testera z data.sql (z lekami). Patrz DevTesterAccount.
+    tester-email: ${DEV_TESTER_EMAIL:}

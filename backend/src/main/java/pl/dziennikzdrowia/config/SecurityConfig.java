@@ -40,6 +40,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/google").permitAll()
+                        // Logowanie testera (DevAuthController). Kontroler istnieje tylko z profilem "local",
+                        // bez niego pod tym adresem nic nie ma i jest 404.
+                        .requestMatchers(HttpMethod.POST, "/api/auth/dev-login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/csrf").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         // Wyszukiwarka lekow jest w onboardingu, przed logowaniem; wykaz MZ jest publiczny.

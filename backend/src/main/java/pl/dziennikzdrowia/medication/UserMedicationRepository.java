@@ -16,4 +16,6 @@ public interface UserMedicationRepository extends JpaRepository<UserMedication, 
 
     @EntityGraph(attributePaths = "doses")
     Optional<UserMedication> findByIdAndUserId(UUID id, UUID userId);
+
+    boolean existsByUserId(UUID userId);
 }

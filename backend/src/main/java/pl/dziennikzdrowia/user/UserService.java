@@ -1,21 +1,27 @@
 package pl.dziennikzdrowia.user;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import pl.dziennikzdrowia.auth.DevTesterAccount;
 import pl.dziennikzdrowia.auth.GoogleIdentity;
 
 import java.time.YearMonth;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
+    // Jest tylko z profilem "local"; na produkcji pusty.
+    private final ObjectProvider<DevTesterAccount> devTesterAccount;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, ObjectProvider<DevTesterAccount> devTesterAccount) {
         this.userRepository = userRepository;
+        this.devTesterAccount = devTesterAccount;
     }
 
     /**
@@ -24,7 +30,8 @@ public class UserService {
      */
     @Transactional
     public User signInWithGoogle(GoogleIdentity identity) {
-        User user = userRepository.findByGoogleSub(identity.sub())
+        User user = devTester(identity)
+                .or(() -> userRepository.findByGoogleSub(identity.sub()))
                 .orElseGet(() -> {
                     User created = new User();
                     created.setGoogleSub(identity.sub());
@@ -71,5 +78,10 @@ public class UserService {
         return userRepository.findById(userId)
                 // Sesja jest, ale usera usunieto z bazy.
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    }
+
+    private Optional<User> devTester(GoogleIdentity identity) {
+        DevTesterAccount account = devTesterAccount.getIfAvailable();
+        return account == null ? Optional.empty() : account.claimForGoogle(identity);
     }
 }

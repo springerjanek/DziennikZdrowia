@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -108,9 +107,9 @@ class UserMedicationControllerTest {
 
     @Test
     void createsMedicationWithSortedDosesAndCurrentReimbursement() throws Exception {
-        MockHttpSession session = signIn("ania");
+        Cookie session = signIn("ania");
 
-        mockMvc.perform(withCsrf(post("/api/me/medications")).session(session)
+        mockMvc.perform(withCsrf(post("/api/me/medications")).cookie(session)
                         .contentType(MediaType.APPLICATION_JSON).content(DAILY_TWICE))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
@@ -119,7 +118,7 @@ class UserMedicationControllerTest {
                 .andExpect(jsonPath("$.doses[1].amount").value(0.5))
                 .andExpect(jsonPath("$.reimbursement.level").value("flat_rate"));
 
-        mockMvc.perform(get("/api/me/medications").session(session))
+        mockMvc.perform(get("/api/me/medications").cookie(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("Metformax 500"));
@@ -127,9 +126,9 @@ class UserMedicationControllerTest {
 
     @Test
     void medicationWithoutGtinIsFullPrice() throws Exception {
-        MockHttpSession session = signIn("ania");
+        Cookie session = signIn("ania");
 
-        mockMvc.perform(withCsrf(post("/api/me/medications")).session(session)
+        mockMvc.perform(withCsrf(post("/api/me/medications")).cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name": "Ibuprom", "scheduleType": "AS_NEEDED", "maxDailyDoses": 3,
@@ -140,10 +139,10 @@ class UserMedicationControllerTest {
 
     @Test
     void scheduleExpandsDosesForRange() throws Exception {
-        MockHttpSession session = signIn("ania");
+        Cookie session = signIn("ania");
         create(session, DAILY_TWICE);
 
-        mockMvc.perform(get("/api/me/medications/schedule").session(session)
+        mockMvc.perform(get("/api/me/medications/schedule").cookie(session)
                         .param("from", "2026-10-20").param("to", "2026-10-21"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(4)))
@@ -154,9 +153,9 @@ class UserMedicationControllerTest {
 
     @Test
     void scheduleRejectsTooLongRange() throws Exception {
-        MockHttpSession session = signIn("ania");
+        Cookie session = signIn("ania");
 
-        mockMvc.perform(get("/api/me/medications/schedule").session(session)
+        mockMvc.perform(get("/api/me/medications/schedule").cookie(session)
                         .param("from", "2026-01-01").param("to", "2026-12-31"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detail").isNotEmpty());
@@ -164,9 +163,9 @@ class UserMedicationControllerTest {
 
     @Test
     void rejectsWeekdaysScheduleWithoutDays() throws Exception {
-        MockHttpSession session = signIn("ania");
+        Cookie session = signIn("ania");
 
-        mockMvc.perform(withCsrf(post("/api/me/medications")).session(session)
+        mockMvc.perform(withCsrf(post("/api/me/medications")).cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(DAILY_TWICE.replace("\"DAILY\"", "\"WEEKDAYS\"")))
                 .andExpect(status().isBadRequest())
@@ -175,9 +174,9 @@ class UserMedicationControllerTest {
 
     @Test
     void rejectsDuplicateTimes() throws Exception {
-        MockHttpSession session = signIn("ania");
+        Cookie session = signIn("ania");
 
-        mockMvc.perform(withCsrf(post("/api/me/medications")).session(session)
+        mockMvc.perform(withCsrf(post("/api/me/medications")).cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(DAILY_TWICE.replace("20:00", "08:00")))
                 .andExpect(status().isBadRequest());
@@ -185,9 +184,9 @@ class UserMedicationControllerTest {
 
     @Test
     void rejectsMissingFields() throws Exception {
-        MockHttpSession session = signIn("ania");
+        Cookie session = signIn("ania");
 
-        mockMvc.perform(withCsrf(post("/api/me/medications")).session(session)
+        mockMvc.perform(withCsrf(post("/api/me/medications")).cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"\", \"scheduleType\": \"DAILY\", \"doses\": []}"))
                 .andExpect(status().isBadRequest());
@@ -195,10 +194,10 @@ class UserMedicationControllerTest {
 
     @Test
     void updatesScheduleToWeekdays() throws Exception {
-        MockHttpSession session = signIn("ania");
+        Cookie session = signIn("ania");
         String id = create(session, DAILY_TWICE);
 
-        mockMvc.perform(withCsrf(put("/api/me/medications/" + id)).session(session)
+        mockMvc.perform(withCsrf(put("/api/me/medications/" + id)).cookie(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name": "Metotreksat", "scheduleType": "WEEKDAYS", "weekdays": ["MONDAY"],
@@ -212,29 +211,29 @@ class UserMedicationControllerTest {
     @Test
     void otherUserCannotSeeOrDeleteMedication() throws Exception {
         String id = create(signIn("ania"), DAILY_TWICE);
-        MockHttpSession ola = signIn("ola");
+        Cookie ola = signIn("ola");
 
-        mockMvc.perform(get("/api/me/medications").session(ola))
+        mockMvc.perform(get("/api/me/medications").cookie(ola))
                 .andExpect(jsonPath("$", hasSize(0)));
-        mockMvc.perform(get("/api/me/medications/" + id).session(ola))
+        mockMvc.perform(get("/api/me/medications/" + id).cookie(ola))
                 .andExpect(status().isNotFound());
-        mockMvc.perform(withCsrf(delete("/api/me/medications/" + id)).session(ola))
+        mockMvc.perform(withCsrf(delete("/api/me/medications/" + id)).cookie(ola))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void deletesMedication() throws Exception {
-        MockHttpSession session = signIn("ania");
+        Cookie session = signIn("ania");
         String id = create(session, DAILY_TWICE);
 
-        mockMvc.perform(withCsrf(delete("/api/me/medications/" + id)).session(session))
+        mockMvc.perform(withCsrf(delete("/api/me/medications/" + id)).cookie(session))
                 .andExpect(status().isNoContent());
-        mockMvc.perform(get("/api/me/medications/" + id).session(session))
+        mockMvc.perform(get("/api/me/medications/" + id).cookie(session))
                 .andExpect(status().isNotFound());
     }
 
-    private String create(MockHttpSession session, String body) throws Exception {
-        String json = mockMvc.perform(withCsrf(post("/api/me/medications")).session(session)
+    private String create(Cookie session, String body) throws Exception {
+        String json = mockMvc.perform(withCsrf(post("/api/me/medications")).cookie(session)
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
@@ -242,12 +241,12 @@ class UserMedicationControllerTest {
         return json.substring(start, json.indexOf('"', start));
     }
 
-    private MockHttpSession signIn(String credential) throws Exception {
-        return (MockHttpSession) mockMvc.perform(withCsrf(post("/api/auth/google"))
+    private Cookie signIn(String credential) throws Exception {
+        return mockMvc.perform(withCsrf(post("/api/auth/google"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"credential\":\"" + credential + "\"}"))
                 .andExpect(status().isOk())
-                .andReturn().getRequest().getSession(false);
+                .andReturn().getResponse().getCookie("SESSION");
     }
 
     private MockHttpServletRequestBuilder withCsrf(MockHttpServletRequestBuilder request) throws Exception {
