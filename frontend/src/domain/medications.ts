@@ -1,5 +1,5 @@
 import { z } from "zod";
-//ZWROTY KOSZTOW
+
 // S = 65+, DZ = do 18 lat, C = ciąża
 export const entitlementCodeSchema = z.enum(["S", "DZ", "C"]);
 
@@ -15,26 +15,32 @@ export const reimbursementLevelSchema = z.enum([
 
 export type ReimbursementLevel = z.infer<typeof reimbursementLevelSchema>;
 
+// Ten sam lek bywa refundowany inaczej w różnych chorobach.
+export const indicationSchema = z.object({
+  text: z.string(),
+  level: reimbursementLevelSchema,
+  patientSurcharge: z.number().nullable(),
+});
+
+export type Indication = z.infer<typeof indicationSchema>;
+
 export const reimbursementSchema = z.object({
   level: reimbursementLevelSchema,
-  freeFor: z.array(entitlementCodeSchema).default([]),
-  announcementDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  freeFor: z.array(entitlementCodeSchema),
+  announcementDate: z.string().nullable(),
+  indications: z.array(indicationSchema),
 });
 
 export type Reimbursement = z.infer<typeof reimbursementSchema>;
 
+// Odpowiada MedicationSearchResult z backendu. Leki spoza wykazu MZ
+// przychodzą z NFZ i mają tylko nazwę - reszta pól jest wtedy pusta.
 export const medicationSchema = z.object({
-  ean: z
-    .string()
-    .regex(/^\d{8,14}$/)
-    .optional(),
+  ean: z.string().nullable(),
   name: z.string().min(1),
-  activeSubstance: z.string().min(1).optional(),
-  atc: z
-    .string()
-    .regex(/^[A-Z]\d{2}[A-Z]{2}\d{2}$/)
-    .optional(),
-  reimbursement: reimbursementSchema.optional(),
+  activeSubstance: z.string().nullable(),
+  packSize: z.string().nullable(),
+  reimbursement: reimbursementSchema,
 });
 
 export type Medication = z.infer<typeof medicationSchema>;
@@ -50,21 +56,145 @@ export const medicationEntrySchema = z.object({
 
 export type MedicationEntry = z.infer<typeof medicationEntrySchema>;
 
+// Lek bez EAN-u rozróżniamy po nazwie: tak przychodzą wyniki z NFZ
+// i tak dodaje je użytkownik, gdy wyszukiwarka nic nie znajdzie.
+export function medicationKey(medication: Medication): string {
+  return medication.ean ?? medication.name;
+}
+
+// Lek spoza wykazu MZ: pełna cena, bez uprawnień.
+export function manualMedication(name: string): Medication {
+  return {
+    ean: null,
+    name: name.trim(),
+    activeSubstance: null,
+    packSize: null,
+    reimbursement: {
+      level: "full",
+      freeFor: [],
+      announcementDate: null,
+      indications: [],
+    },
+  };
+}
+
 export function qualifiesForFree(
   medication: Medication,
   userEntitlements: EntitlementCode[],
 ): boolean {
-  const freeFor = medication.reimbursement?.freeFor;
-  if (!freeFor) {
-    return false;
-  }
-
   for (const code of userEntitlements) {
-    if (freeFor.includes(code)) {
+    if (medication.reimbursement.freeFor.includes(code)) {
       return true;
     }
   }
   return false;
+}
+
+// Wykaz MZ ma osobna pozycje dla kazdego opakowania, wiec jedno zapytanie potrafi
+// zwrocic kilkanascie wierszy tego samego leku. Nazwa z backendu zawiera postac i dawke
+// ("Metformax SR 1000, tabl. o przedl. uwalnianiu, 1000 mg"), wiec grupowanie po niej
+// nie sklei ze soba lekow, ktore roznia sie skladem - tylko same opakowania.
+export type MedicationGroup = {
+  name: string;
+  activeSubstance: string | null;
+  options: Medication[];
+};
+
+// "30 szt." -> 30, "5 wkl. po 3 ml" -> 5. Pierwsza liczba to zawsze liczba sztuk
+// w opakowaniu. Opakowania bez liczby ida na koniec.
+function packUnits(medication: Medication): number {
+  const digits = medication.packSize?.match(/\d+/) ?? null;
+  return digits === null ? Number.MAX_SAFE_INTEGER : Number(digits[0]);
+}
+
+// Ten sam lek ma inna doplate w kazdym opakowaniu, a bywa ze i w kazdym wskazaniu.
+function surcharges(medication: Medication): number[] {
+  return medication.reimbursement.indications
+    .map((indication) => indication.patientSurcharge)
+    .filter((amount) => amount !== null);
+}
+
+// Wykaz miewa dwa wpisy o tej samej wielkosci opakowania i tej samej cenie (rozni wytworcy,
+// rozny EAN). Nie pokazujemy wytworcy, wiec dla uzytkownika to ten sam wybor w dwoch wierszach.
+function withoutIdenticalPacks(options: Medication[]): Medication[] {
+  const seen = new Set<string>();
+  const unique: Medication[] = [];
+  for (const option of options) {
+    const prices = surcharges(option)
+      .sort((first, second) => first - second)
+      .join(",");
+    const key = `${option.packSize}|${prices}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(option);
+    }
+  }
+  return unique;
+}
+
+export function groupByName(medications: Medication[]): MedicationGroup[] {
+  // Map zachowuje kolejnosc wstawiania, wiec ranking z backendu zostaje nienaruszony.
+  const groups = new Map<string, MedicationGroup>();
+  for (const medication of medications) {
+    const existing = groups.get(medication.name);
+    if (existing === undefined) {
+      groups.set(medication.name, {
+        name: medication.name,
+        activeSubstance: medication.activeSubstance,
+        options: [medication],
+      });
+    } else {
+      existing.options.push(medication);
+    }
+  }
+  // Opakowania rosnaco; sort jest stabilny, wiec rowne wielkosci zostaja w kolejnosci z backendu.
+  for (const group of groups.values()) {
+    group.options.sort((first, second) => packUnits(first) - packUnits(second));
+    group.options = withoutIdenticalPacks(group.options);
+  }
+  return [...groups.values()];
+}
+
+function formatZloty(amount: number): string {
+  return amount.toLocaleString("pl-PL", { minimumFractionDigits: 2 });
+}
+
+export function formatSurcharge(medications: Medication[]): string | null {
+  const amounts = medications.flatMap(surcharges);
+  if (amounts.length === 0) {
+    return null;
+  }
+  const lowest = Math.min(...amounts);
+  const highest = Math.max(...amounts);
+  if (lowest === highest) {
+    return `${formatZloty(lowest)} zł`;
+  }
+  return `${formatZloty(lowest)}–${formatZloty(highest)} zł`;
+}
+
+// Jedno opakowanie bywa refundowane inaczej w roznych chorobach - wtedy "od", bo ktora
+// kwota obowiazuje, zalezy od diagnozy. Zakres przy jednym pudelku wygladalby jak niepewnosc ceny.
+export function formatPackSurcharge(medication: Medication): string | null {
+  const amounts = surcharges(medication);
+  if (amounts.length === 0) {
+    return null;
+  }
+  const lowest = Math.min(...amounts);
+  return amounts.some((amount) => amount !== lowest)
+    ? `od ${formatZloty(lowest)} zł`
+    : `${formatZloty(lowest)} zł`;
+}
+
+export function packCountLabel(count: number): string {
+  if (count === 1) {
+    return "1 opakowanie";
+  }
+  // Polska liczba mnoga: koncowka 2-4 bierze "opakowania", poza nastolatkami (12-14).
+  const lastDigit = count % 10;
+  const teens = count % 100 >= 12 && count % 100 <= 14;
+  return lastDigit >= 2 && lastDigit <= 4 && !teens
+    ? `${count} opakowania`
+    : `${count} opakowań`;
 }
 
 export function reimbursementLabel(level: ReimbursementLevel): string {
@@ -80,4 +210,21 @@ export function reimbursementLabel(level: ReimbursementLevel): string {
     case "full":
       return "pełna cena";
   }
+}
+
+// Wykaz ma 14-znakowy GTIN, a na pudelku wydrukowane jest 13 cyfr kodu EAN.
+export function formatEan(ean: string): string {
+  return ean.length === 14 && ean.startsWith("0") ? ean.slice(1) : ean;
+}
+
+// Ten sam lek potrafi miec w wykazie dwa wpisy o identycznej wielkosci opakowania,
+// rozne tylko kodem i cena. Obwieszczenie nie podaje producenta, wiec jedyne,
+// co user moze porownac z pudelkiem, to kod EAN.
+export function needsEanToTellApart(
+  options: Medication[],
+  option: Medication,
+): boolean {
+  return options.some(
+    (other) => other !== option && other.packSize === option.packSize,
+  );
 }

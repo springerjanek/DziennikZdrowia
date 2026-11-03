@@ -1,13 +1,12 @@
 import type { ChronicConditionId } from "./conditions";
+// PROGRAM_NFZ = bezpłatny, twarde kryteria. RECOMMENDATION = dobra praktyka, zwykle płatna.
+import type { RuleSource } from "./dueScreenings";
 import {
   ageByYear,
   ageInYearsCompleted,
   type HealthProfile,
   type Sex,
 } from "./profile";
-
-// PROGRAM_NFZ = bezpłatny, twarde kryteria. RECOMMENDATION = dobra praktyka, zwykle płatna.
-export type RuleSource = "PROGRAM_NFZ" | "RECOMMENDATION";
 
 export type AgeBasis = "year" | "completed";
 

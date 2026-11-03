@@ -29,6 +29,13 @@ export async function signInWithGoogle(credential: string): Promise<AuthUser> {
   return parseUser(response);
 }
 
+// Logowanie na testera z data.sql, bez Google. Backend wystawia ten endpoint
+// tylko z profilem "local" - inaczej odpowiada 404.
+export async function signInAsTester(): Promise<AuthUser> {
+  const response = await apiFetch("/api/auth/dev-login", { method: "POST" });
+  return parseUser(response);
+}
+
 export async function fetchCurrentUser(): Promise<AuthUser | null> {
   try {
     return await parseUser(await apiFetch("/api/me"));

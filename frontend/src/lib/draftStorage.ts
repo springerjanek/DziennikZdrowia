@@ -1,44 +1,62 @@
+import type { z } from "zod";
 import {
   emptyDraft,
   onboardingDraftSchema,
   type OnboardingDraft,
 } from "@/features/onboarding/draft";
 
-const STORAGE_KEY = "dz.onboarding.draft.v1";
+const ONBOARDING_KEY = "dz.onboarding.draft.v1";
 
-export function loadDraft(): OnboardingDraft {
+function read<T extends object>(
+  key: string,
+  schema: z.ZodType<T>,
+  fallback: T,
+): T {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (raw === null) {
-      return emptyDraft;
+      return fallback;
     }
 
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== "object" || parsed === null) {
-      return emptyDraft;
+      return fallback;
     }
 
-    const merged = { ...emptyDraft, ...parsed };
-    const result = onboardingDraftSchema.safeParse(merged);
+    // Brakujace pola bierzemy z pustego szkicu - zapis sprzed zmiany formularza
+    // ma wtedy szanse przejsc zamiast wyladowac w koszu.
+    const result = schema.safeParse({ ...fallback, ...parsed });
 
-    return result.success ? result.data : emptyDraft;
+    return result.success ? result.data : fallback;
   } catch {
-    return emptyDraft;
+    return fallback;
   }
 }
 
-export function saveDraft(draft: OnboardingDraft): void {
+function write(key: string, value: unknown): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+    localStorage.setItem(key, JSON.stringify(value));
   } catch {
-    // brak miejsca albo tryb prywatny - onboarding dziala dalej bez zapisu
+    // brak miejsca albo tryb prywatny - formularz dziala dalej, tylko bez pamieci
   }
 }
 
-export function clearDraft(): void {
+function remove(key: string): void {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(key);
   } catch {
     // jw.
   }
+}
+
+export function loadDraft(): OnboardingDraft {
+  return read(ONBOARDING_KEY, onboardingDraftSchema, emptyDraft);
+}
+
+export function saveDraft(draft: OnboardingDraft): void {
+  write(ONBOARDING_KEY, draft);
+}
+
+export function clearDraft(): void {
+  remove(ONBOARDING_KEY);
 }
