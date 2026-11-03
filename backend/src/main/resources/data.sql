@@ -4,9 +4,27 @@
 -- ale z profilem "local" wchodzi sie na niego przez POST /api/auth/dev-login (DevAuthController).
 -- GTIN-y sa z obwieszczenia MZ na 1.10.2026, wiec po imporcie wykazu leki pokazuja refundacje.
 
-INSERT INTO users (id, google_sub, email, name, picture_url) VALUES
-    ('00000000-0000-0000-0000-000000000002', 'seed-jan', 'jan@example.com', 'Jan Testowy', NULL)
-ON CONFLICT (id) DO NOTHING;
+-- Profil pasuje do lekow ponizej (metformina + insulina, lewotyroksyna), bo to on decyduje,
+-- ktore reguly profilaktyki sie odpala. Bez niego /api/me/screenings oddaje 409.
+INSERT INTO users (id, google_sub, email, name, picture_url, birth_year, birth_month, sex) VALUES
+    ('00000000-0000-0000-0000-000000000002', 'seed-jan', 'jan@example.com', 'Jan Testowy', NULL, 1965, 4, 'MALE')
+-- DO UPDATE, bo bazy z wczesniejszym seedem maja juz tego usera bez profilu.
+-- WHERE pilnuje, zeby nie nadpisac profilu zmienionego w aplikacji.
+ON CONFLICT (id) DO UPDATE
+    SET birth_year = EXCLUDED.birth_year,
+        birth_month = EXCLUDED.birth_month,
+        sex = EXCLUDED.sex
+    WHERE users.birth_year IS NULL;
+
+INSERT INTO user_condition (user_id, condition_id)
+SELECT seed.user_id, seed.condition_id
+FROM (VALUES
+    ('00000000-0000-0000-0000-000000000002'::uuid, 'diabetes_t2'),
+    ('00000000-0000-0000-0000-000000000002'::uuid, 'hypothyroidism')
+) AS seed (user_id, condition_id)
+-- Jak przy dawkach: sprawdzamy, czy tester ma juz jakiekolwiek choroby. Inaczej seed
+-- przywracalby przy kazdym starcie te, ktore ktos skasowal w aplikacji.
+WHERE NOT EXISTS (SELECT 1 FROM user_condition c WHERE c.user_id = seed.user_id);
 
 INSERT INTO user_medications
     (id, user_id, gtin, name, active_substance, schedule_type, interval_days, max_daily_doses, start_date, end_date, notes)
