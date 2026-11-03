@@ -1,3 +1,4 @@
+import { Check, Trash2 } from "lucide-react";
 import { medicationKey, type Medication } from "@/domain";
 import { MedicationSearch } from "@/features/medications/MedicationSearch";
 import {
@@ -59,9 +60,10 @@ export function StepMedications({ draft, onChange }: StepMedicationsProps) {
                           medications: removeMedication(draft.medications, key),
                         })
                       }
-                      className="shrink-0 rounded px-2 text-slate-400 hover:text-danger-600"
+                      className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-field border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:border-danger-600 hover:bg-danger-50 hover:text-danger-700"
                     >
-                      ✕
+                      <Trash2 aria-hidden="true" className="size-4" />
+                      Usuń
                     </button>
                   </div>
                   <div className="flex gap-2">
@@ -79,12 +81,15 @@ export function StepMedications({ draft, onChange }: StepMedicationsProps) {
                             ),
                           })
                         }
-                        className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                        className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium ${
                           entry.usage === usage
                             ? "border-brand-600 bg-brand-50 text-brand-700"
                             : "border-slate-300 text-slate-600"
                         }`}
                       >
+                        {entry.usage === usage && (
+                          <Check aria-hidden="true" className="size-4" />
+                        )}
                         {usage === "regular"
                           ? "biorę stale"
                           : "brałem ostatnio"}

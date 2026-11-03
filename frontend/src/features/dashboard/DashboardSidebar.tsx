@@ -3,10 +3,12 @@ import { NavLink } from "react-router";
 const LINKS = [
   { to: "/dashboard", label: "Profilaktyka", end: true },
   { to: "/dashboard/leki", label: "Leki", end: false },
+  { to: "/dashboard/ustawienia", label: "Ustawienia", end: false },
 ];
 
 function linkClassName({ isActive }: { isActive: boolean }): string {
-  const base = "block rounded-field px-3 py-2 text-sm font-medium";
+  const base =
+    "flex min-h-11 items-center rounded-field px-3 py-2 text-sm font-medium";
   return isActive
     ? `${base} bg-brand-50 text-brand-700`
     : `${base} text-slate-600 hover:bg-slate-100`;

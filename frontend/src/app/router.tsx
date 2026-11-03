@@ -43,6 +43,13 @@ export const router = createBrowserRouter([
         },
       },
       {
+        path: "ustawienia",
+        lazy: async () => {
+          const { SettingsPage } = await import("@/pages/SettingsPage");
+          return { Component: SettingsPage };
+        },
+      },
+      {
         path: "leki",
         lazy: async () => {
           const [{ MedicationsPage }, { medicationsLoader }] =

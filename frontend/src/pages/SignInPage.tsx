@@ -68,7 +68,7 @@ export function SignInPage() {
           type="button"
           onClick={() => handleSignIn(signInAsTester())}
           disabled={pending}
-          className="mx-auto rounded-field border border-dashed border-slate-400 px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400"
+          className="mx-auto inline-flex min-h-11 items-center rounded-field border border-dashed border-slate-400 px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400"
         >
           Zaloguj jako tester (tylko lokalnie)
         </button>

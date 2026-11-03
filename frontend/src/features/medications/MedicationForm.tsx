@@ -1,3 +1,4 @@
+import { Check, Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import {
   DOSE_UNITS,
@@ -26,7 +27,8 @@ const SCHEDULE_LABELS: { type: ScheduleType; label: string }[] = [
 
 const MAX_DOSES = 24;
 
-const FIELD = "rounded-field border border-slate-300 bg-white px-3 py-2 text-sm";
+const FIELD =
+  "min-h-11 rounded-field border border-slate-300 bg-white px-3 py-2 text-sm";
 
 type MedicationFormProps = {
   medication: Medication;
@@ -118,12 +120,15 @@ export function MedicationForm({
               type="button"
               aria-pressed={draft.scheduleType === option.type}
               onClick={() => onChange({ scheduleType: option.type })}
-              className={`rounded-full border px-3 py-1.5 text-sm font-medium ${
+              className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium ${
                 draft.scheduleType === option.type
                   ? "border-brand-600 bg-brand-50 text-brand-700"
                   : "border-slate-300 text-slate-600 hover:border-brand-400"
               }`}
             >
+              {draft.scheduleType === option.type && (
+                <Check aria-hidden="true" className="size-4" />
+              )}
               {option.label}
             </button>
           ))}
@@ -137,12 +142,15 @@ export function MedicationForm({
                 type="button"
                 aria-pressed={draft.weekdays.includes(day)}
                 onClick={() => toggleWeekday(day)}
-                className={`rounded-field border px-2.5 py-1 text-sm ${
+                className={`inline-flex min-h-11 items-center gap-1 rounded-field border px-3 py-2 text-sm ${
                   draft.weekdays.includes(day)
                     ? "border-brand-600 bg-brand-50 font-medium text-brand-700"
                     : "border-slate-300 text-slate-600 hover:border-brand-400"
                 }`}
               >
+                {draft.weekdays.includes(day) && (
+                  <Check aria-hidden="true" className="size-4" />
+                )}
                 {weekdayLabel(day)}
               </button>
             ))}
@@ -243,7 +251,7 @@ export function MedicationForm({
               {doses.length > 1 && (
                 <button
                   type="button"
-                  aria-label="Usuń tę porę"
+                  aria-label={`Usuń porę ${dose.time}`}
                   onClick={() =>
                     onChange({
                       doses: draft.doses.filter(
@@ -251,9 +259,10 @@ export function MedicationForm({
                       ),
                     })
                   }
-                  className="shrink-0 rounded px-2 text-slate-400 hover:text-danger-600"
+                  className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-field border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:border-danger-600 hover:bg-danger-50 hover:text-danger-700"
                 >
-                  ✕
+                  <Trash2 aria-hidden="true" className="size-4" />
+                  Usuń
                 </button>
               )}
             </li>
@@ -263,7 +272,7 @@ export function MedicationForm({
           <button
             type="button"
             onClick={() => onChange({ doses: [...draft.doses, emptyDose()] })}
-            className="self-start rounded-field border border-brand-600 px-3 py-1.5 text-sm font-medium text-brand-700 hover:bg-brand-50"
+            className="inline-flex min-h-11 items-center self-start rounded-field border border-brand-600 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
           >
             Dodaj porę
           </button>

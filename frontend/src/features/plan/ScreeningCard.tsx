@@ -1,3 +1,4 @@
+import { AlertTriangle, CalendarClock, CircleHelp, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { useRevalidator } from "react-router";
 import { recordScreening } from "@/data/screeningHistory";
@@ -11,6 +12,13 @@ import { formatInterval } from "@/lib/plural";
 
 type Props = {
   screening: DueScreening;
+};
+
+// Sam kolor nie wystarczy - przy daltonizmie czerwony i szary wygladaja tak samo.
+const STATUS_ICONS: Record<ScreeningStatus, LucideIcon> = {
+  DUE: AlertTriangle,
+  NEVER_DONE: CircleHelp,
+  UPCOMING: CalendarClock,
 };
 
 function statusClassName(status: ScreeningStatus): string {
@@ -32,6 +40,7 @@ export function ScreeningCard({ screening }: Props) {
   const [performedOn, setPerformedOn] = useState(today);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const StatusIcon = STATUS_ICONS[screening.status];
 
   function save(): void {
     setSaving(true);
@@ -50,22 +59,27 @@ export function ScreeningCard({ screening }: Props) {
 
   return (
     <li className="flex flex-col gap-2 rounded-card border border-slate-200 bg-white p-4">
-      <div className="flex items-start gap-3">
-        <h3 className="flex-1 font-semibold">{screening.label}</h3>
+      {/* Plakietka nad tytulem, nie obok: w waskim panelu obok kalendarza zabierala
+          szerokosc i nazwa badania lamala sie po jednym slowie. */}
+      <div className="flex flex-col items-start gap-1.5">
         {screening.source === "PROGRAM_NFZ" ? (
-          <span className="shrink-0 rounded-full bg-success-50 px-2 py-0.5 text-xs font-semibold text-success-700">
+          <span className="rounded-full bg-success-50 px-2 py-0.5 text-xs font-semibold text-success-700">
             bezpłatne na NFZ
           </span>
         ) : (
-          <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
             zalecenie
           </span>
         )}
+        <h3 className="font-semibold">{screening.label}</h3>
       </div>
 
       <p className="text-sm text-slate-600">{screening.rationale}</p>
 
-      <p className={`text-sm font-medium ${statusClassName(screening.status)}`}>
+      <p
+        className={`flex items-center gap-1.5 text-sm font-medium ${statusClassName(screening.status)}`}
+      >
+        <StatusIcon aria-hidden="true" className="size-4 shrink-0" />
         {describeDue(screening)}
       </p>
 
@@ -88,20 +102,20 @@ export function ScreeningCard({ screening }: Props) {
               value={performedOn}
               max={today}
               onChange={(event) => setPerformedOn(event.target.value)}
-              className="rounded-field border border-slate-300 bg-white px-3 py-2 text-sm"
+              className="min-h-11 rounded-field border border-slate-300 bg-white px-3 py-2 text-sm"
             />
             <button
               type="button"
               disabled={saving}
               onClick={save}
-              className="rounded-field bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:bg-slate-300"
+              className="inline-flex min-h-11 items-center rounded-field bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:bg-slate-300"
             >
               {saving ? "Zapisuję…" : "Zapisz"}
             </button>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded-field px-3 py-2 text-sm text-slate-600 hover:bg-slate-100"
+              className="inline-flex min-h-11 items-center rounded-field px-3 py-2 text-sm text-slate-600 hover:bg-slate-100"
             >
               Anuluj
             </button>
@@ -116,7 +130,7 @@ export function ScreeningCard({ screening }: Props) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="self-start rounded-field border border-brand-600 px-3 py-1.5 text-sm font-medium text-brand-700 hover:bg-brand-50"
+          className="inline-flex min-h-11 items-center self-start rounded-field border border-brand-600 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
         >
           Zaznacz jako zrobione
         </button>
