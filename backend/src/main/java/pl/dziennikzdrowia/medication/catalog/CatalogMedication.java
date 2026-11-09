@@ -36,6 +36,11 @@ public class CatalogMedication {
     @Column(length = 200)
     private String packSize;
 
+    // Kod ATC z Rejestru Produktów Leczniczych (obwieszczenie go nie ma). Null dla wyrobów medycznych i diet.
+    // Leki złożone mają kilka kodów po przecinku ("L01BA01, L04AX03"); najdłuższy w RPL ma ok. 80 znaków.
+    @Column(length = 255)
+    private String atc;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ReimbursementLevel level;

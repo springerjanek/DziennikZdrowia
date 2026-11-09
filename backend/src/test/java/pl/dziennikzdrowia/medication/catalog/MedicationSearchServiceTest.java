@@ -80,6 +80,29 @@ class MedicationSearchServiceTest {
     }
 
     @Test
+    void returnsAtcAndRetailPriceForCatalogAndNothingForNfz() {
+        transactionTemplate.executeWithoutResult(status ->
+                repository.findByGtinIn(List.of("05909990000002")).forEach(row -> row.setAtc("A10BA02")));
+        when(nfzDictionaryClient.searchProductNames(eq("siofor"), anyInt())).thenReturn(List.of("Siofor XR"));
+
+        List<MedicationSearchResult> results = searchService.search("siofor", 10);
+
+        assertThat(results.getFirst()).satisfies(siofor -> {
+            assertThat(siofor.atc()).isEqualTo("A10BA02");
+            assertThat(siofor.retailPrice()).isEqualByComparingTo("20.00");
+            assertThat(siofor.reimbursement().indications())
+                    .extracting(ReimbursementInfo.Indication::retailPrice)
+                    .usingComparatorForType(BigDecimal::compareTo, BigDecimal.class)
+                    .containsExactly(new BigDecimal("20.00"));
+        });
+        assertThat(results.get(1)).satisfies(nfz -> {
+            assertThat(nfz.name()).isEqualTo("Siofor XR");
+            assertThat(nfz.atc()).isNull();
+            assertThat(nfz.retailPrice()).isNull();
+        });
+    }
+
+    @Test
     void groupsIndicationsOfOneGtinAndPicksCheapestLevel() {
         MedicationSearchResult result = searchService.search("sorbalgon", 10).getFirst();
 

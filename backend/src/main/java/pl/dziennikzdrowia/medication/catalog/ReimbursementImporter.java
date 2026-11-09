@@ -10,6 +10,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -27,17 +29,20 @@ public class ReimbursementImporter {
     private final CatalogMedicationRepository repository;
     private final CatalogEntitlementRepository entitlementRepository;
     private final TransactionTemplate transactionTemplate;
+    private final RplAtcClient rplAtcClient;
 
     public ReimbursementImporter(GovPlAnnouncementLocator locator,
                                  AnnouncementXlsxParser parser,
                                  CatalogMedicationRepository repository,
                                  CatalogEntitlementRepository entitlementRepository,
-                                 TransactionTemplate transactionTemplate) {
+                                 TransactionTemplate transactionTemplate,
+                                 RplAtcClient rplAtcClient) {
         this.locator = locator;
         this.parser = parser;
         this.repository = repository;
         this.entitlementRepository = entitlementRepository;
         this.transactionTemplate = transactionTemplate;
+        this.rplAtcClient = rplAtcClient;
     }
 
     @Scheduled(initialDelayString = "${app.reimbursement.initial-delay}", fixedDelayString = "${app.reimbursement.check-interval}")
@@ -58,13 +63,21 @@ public class ReimbursementImporter {
 
         Announcement announcement = found.get();
         Optional<LocalDate> current = repository.findCurrentAnnouncementDate();
-        if (current.isPresent() && !announcement.effectiveDate().isAfter(current.get())) {
+        boolean newer = current.isEmpty() || announcement.effectiveDate().isAfter(current.get());
+        if (!newer) {
+            // Wykaz aktualny; jeśli brak w nim ATC (pierwsze uruchomienie po dodaniu kolumny
+            // albo RPL nie odpowiedział przy imporcie), uzupełniamy same kody.
+            if (!repository.existsByAtcIsNotNull()) {
+                fillMissingAtc();
+            }
             return;
         }
 
         log.info("Import wykazu leków refundowanych na {} z {}", announcement.effectiveDate(), announcement.pageUrl());
         byte[] xlsx = locator.downloadXlsx(announcement);
         ParsedAnnouncement parsed = parser.parse(new ByteArrayInputStream(xlsx), announcement.effectiveDate());
+        Map<String, String> atcByGtin = atcByGtin();
+        parsed.medications().forEach(medication -> medication.setAtc(atcByGtin.get(medication.getGtin())));
 
         transactionTemplate.executeWithoutResult(status -> {
             repository.deleteAllInBatch();
@@ -72,7 +85,32 @@ public class ReimbursementImporter {
             repository.saveAll(parsed.medications());
             entitlementRepository.saveAll(parsed.entitlements());
         });
-        log.info("Zaimportowano {} pozycji i {} uprawnień S/DZ/C",
-                parsed.medications().size(), parsed.entitlements().size());
+        log.info("Zaimportowano {} pozycji ({} z kodem ATC) i {} uprawnień S/DZ/C",
+                parsed.medications().size(),
+                parsed.medications().stream().filter(medication -> medication.getAtc() != null).count(),
+                parsed.entitlements().size());
+    }
+
+    private void fillMissingAtc() {
+        Map<String, String> atcByGtin = atcByGtin();
+        if (atcByGtin.isEmpty()) {
+            return;
+        }
+        Long filled = transactionTemplate.execute(status -> {
+            List<CatalogMedication> medications = repository.findAll();
+            medications.forEach(medication -> medication.setAtc(atcByGtin.get(medication.getGtin())));
+            return medications.stream().filter(medication -> medication.getAtc() != null).count();
+        });
+        log.info("Uzupełniono kody ATC z Rejestru Produktów Leczniczych: {} pozycji", filled);
+    }
+
+    /** Pusta mapa, gdy rejestr nie odpowiada: wykaz z cenami jest ważniejszy niż ATC. */
+    private Map<String, String> atcByGtin() {
+        try {
+            return rplAtcClient.downloadAtcByGtin();
+        } catch (Exception e) {
+            log.warn("Nie udało się pobrać kodów ATC z Rejestru Produktów Leczniczych", e);
+            return Map.of();
+        }
     }
 }

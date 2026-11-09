@@ -262,7 +262,7 @@ public class MedicationSearchService {
                 best = row.getLevel();
             }
             indications.add(new ReimbursementInfo.Indication(
-                    row.getIndication(), row.getLevel().apiValue(), row.getPatientSurcharge()));
+                    row.getIndication(), row.getLevel().apiValue(), row.getPatientSurcharge(), row.getRetailPrice()));
         }
 
         return new MedicationSearchResult(
@@ -270,6 +270,8 @@ public class MedicationSearchService {
                 first.getName(),
                 first.getActiveSubstance(),
                 first.getPackSize(),
+                first.getAtc(),
+                first.getRetailPrice(),
                 new ReimbursementInfo(
                         best.apiValue(), freeFor, first.getAnnouncementDate(), indications));
     }
@@ -289,7 +291,7 @@ public class MedicationSearchService {
                 break;
             }
             if (!catalogBrands.contains(brand(name))) {
-                results.add(new MedicationSearchResult(null, name, null, null, fullPrice));
+                results.add(new MedicationSearchResult(null, name, null, null, null, null, fullPrice));
             }
         }
         return results;
