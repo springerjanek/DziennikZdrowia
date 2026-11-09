@@ -60,7 +60,9 @@ class MedicationSearchServiceTest {
                 row("05909990000009", "Acidum folicum Richter, tabl., 15 mg", "Acidum folicum", ReimbursementLevel.P30, "Niedokrwistość"),
                 row("05909990000010", "Apap, tabl., 500 mg", "Paracetamolum", ReimbursementLevel.P30, "Ból"),
                 row("05909990000011", "Doreta, tabl. powl., 37,5 mg + 325 mg", "Tramadoli hydrochloridum + Paracetamolum", ReimbursementLevel.P30, "Ból"),
-                row("05909990000012", "Aerox, proszek do inhal., 50 µg", "Salmeterolum", ReimbursementLevel.P30, "Astma")));
+                row("05909990000012", "Aerox, proszek do inhal., 50 µg", "Salmeterolum", ReimbursementLevel.P30, "Astma"),
+                row("05909990000013", "BD Micro-Fine+, igły, 31G x 5 mm", "Igły do penów", ReimbursementLevel.P30, "Cukrzyca"),
+                row("05909990000014", "Shingrix, proszek i zawiesina", "Szczepionka przeciw półpaścowi", ReimbursementLevel.P50, "Półpasiec")));
         when(nfzDictionaryClient.searchProductNames(anyString(), anyInt())).thenReturn(List.of());
     }
 
@@ -201,6 +203,20 @@ class MedicationSearchServiceTest {
             assertThat(searchService.search(query, 10)).extracting(MedicationSearchResult::ean)
                     .as(query)
                     .containsExactly("05909990000005");
+        }
+    }
+
+    @Test
+    void findsPolishSubstancesWithOrWithoutDiacritics() {
+        for (String query : List.of("igły do penów", "igly do penow", "IGLY DO PENOW")) {
+            assertThat(searchService.search(query, 10)).extracting(MedicationSearchResult::ean)
+                    .as(query)
+                    .containsExactly("05909990000013");
+        }
+        for (String query : List.of("szczepionka przeciw półpaścowi", "szczepionka przeciw polpascowi")) {
+            assertThat(searchService.search(query, 10)).extracting(MedicationSearchResult::ean)
+                    .as(query)
+                    .containsExactly("05909990000014");
         }
     }
 

@@ -36,6 +36,16 @@ public class MedicationSearchService {
             Map.entry("tt", "t"), Map.entry("ff", "f"), Map.entry("pp", "p"));
 
     /**
+     * Polskie litery z ogonkami (po {@code lower}) -> bez ogonków. W Javie robi to {@link #stripDiacritics},
+     * w SQL te zamiany idą przed {@link #SPELLING}. Wykaz to głównie łacina, ale część substancji ma polskie
+     * nazwy ("Igły do penów", "Szczepionka przeciw półpaścowi") i bez tego nie da się ich znaleźć bez ogonków.
+     */
+    static final List<Map.Entry<String, String>> DIACRITICS = List.of(
+            Map.entry("ą", "a"), Map.entry("ć", "c"), Map.entry("ę", "e"), Map.entry("ł", "l"),
+            Map.entry("ń", "n"), Map.entry("ó", "o"), Map.entry("ś", "s"), Map.entry("ź", "z"),
+            Map.entry("ż", "z"));
+
+    /**
      * Polska nazwa (małymi literami, bez ogonków) -> łacińska nazwa z wykazu.
      * Tylko to, czego nie załatwi {@link #SPELLING}.
      */
@@ -324,9 +334,12 @@ public class MedicationSearchService {
         return result;
     }
 
-    /** To samo co {@link #spelling} jako wyrażenie JPQL (bez usuwania ogonków; nazwy w wykazie to łacina). */
+    /** To samo co {@link #spelling} jako wyrażenie JPQL: najpierw ogonki ({@link #DIACRITICS}), potem pisownia. */
     static String spellingSql(String column) {
         String sql = "lower(" + column + ")";
+        for (Map.Entry<String, String> change : DIACRITICS) {
+            sql = "replace(" + sql + ", '" + change.getKey() + "', '" + change.getValue() + "')";
+        }
         for (Map.Entry<String, String> change : SPELLING) {
             sql = "replace(" + sql + ", '" + change.getKey() + "', '" + change.getValue() + "')";
         }
