@@ -30,6 +30,9 @@ services:
       # "local" = dane testowe + logowanie testera (patrz .env.example). Domyslnie puste.
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
       DEV_TESTER_EMAIL: ${DEV_TESTER_EMAIL:-}
+      # Kolejki SOR z kolejkisor.pl. Puste = strona SOR pokazuje tylko numer 112.
+      SOR_API_KEY: ${SOR_API_KEY:-}
+      SOR_API_SECRET: ${SOR_API_SECRET:-}
     ports:
       - "8080:8080"
     depends_on:

@@ -80,3 +80,10 @@ app:
   # Slownik nazw lekow z API NFZ (leki, ktore byly kiedys refundowane w aptekach).
   nfz:
     api-url: https://api.nfz.gov.pl/app-stat-api-ra
+
+  # Kolejki na SOR-ach z kolejkisor.pl. Klucz i sekret z panelu https://kolejkisor.pl/account/api-keys
+  # (plan Starter: 50 zapytan na dobe). Bez nich strona SOR pokazuje komunikat i numer 112.
+  sor:
+    api-url: https://kolejkisor.pl/api/public
+    api-key: ${SOR_API_KEY:}
+    api-secret: ${SOR_API_SECRET:}
