@@ -37,8 +37,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SorControllerTest {
 
     private static final SorHospital GDANSK = new SorHospital(
-            "a1b2c3d4-0000-0000-0000-000000000001", "UCK - SOR", "Gdańsk", "ul. Smoluchowskiego 17",
-            2.4, 35, 8, "niskie", 54.37, 18.63);
+            "a1b2c3d4-0000-0000-0000-000000000001", "UCK - SOR", "Gdańsk",
+            2.4, 35, 8, "niskie obciążenie", "aktualne");
 
     @Autowired
     private MockMvc mockMvc;
@@ -62,6 +62,7 @@ class SorControllerTest {
                 .andExpect(jsonPath("$.hospitals[0].name").value("UCK - SOR"))
                 .andExpect(jsonPath("$.hospitals[0].waitMinutes").value(35))
                 .andExpect(jsonPath("$.hospitals[0].distanceKm").value(2.4))
+                .andExpect(jsonPath("$.hospitals[0].freshness").value("aktualne"))
                 .andExpect(jsonPath("$.fetchedAt").exists());
     }
 
