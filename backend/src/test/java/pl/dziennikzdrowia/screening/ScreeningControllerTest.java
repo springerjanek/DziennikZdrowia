@@ -66,9 +66,21 @@ class ScreeningControllerTest {
     }
 
     @Test
-    void endpointsRequireLogin() throws Exception {
-        mockMvc.perform(get("/api/screening/rules")).andExpect(status().isUnauthorized());
+    void rulesArePublic() throws Exception {
+        // Katalog regul to publiczne informacje NFZ, dostepne przed logowaniem.
+        mockMvc.perform(get("/api/screening/rules"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(8));
+    }
+
+    @Test
+    void userEndpointsStillRequireLogin() throws Exception {
         mockMvc.perform(get("/api/me/screenings")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/me/screenings/history")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/me/profile")).andExpect(status().isUnauthorized());
+        // Publiczny jest tylko odczyt katalogu, nie inne metody ani adresy pod nim.
+        mockMvc.perform(post("/api/screening/rules").with(csrf())).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/screening/rules/mammography")).andExpect(status().isUnauthorized());
     }
 
     @Test
