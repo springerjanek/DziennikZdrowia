@@ -38,24 +38,24 @@ public class MedicationSearchService {
     /**
      * Polska nazwa (małymi literami, bez ogonków) -> łacińska nazwa z wykazu.
      * Tylko to, czego nie załatwi {@link #SPELLING}.
+     *
+     * <p>Alias ma sens tylko wtedy, gdy łacińska nazwa naprawdę występuje w wykazie
+     * ({@code select count(*) from catalog_medications where lower(active_substance) like '%...%'}).
+     * Substancji spoza wykazu (np. kwas acetylosalicylowy, żelazo, magnez) nie dodajemy: alias nic by nie
+     * znalazł, a słownik NFZ zna tylko nazwy handlowe. Uwaga na formy: wykaz pisze np. "Kalii citras",
+     * "Nadroparinum calcicum", więc mianownik ("kalium", "calcium") zwykle nie pasuje.
      */
     static final Map<String, String> ALIASES = Map.ofEntries(
-            Map.entry("kwas acetylosalicylowy", "acidum acetylsalicylicum"),
             Map.entry("kwas foliowy", "acidum folicum"),
             Map.entry("kwas walproinowy", "acidum valproicum"),
             Map.entry("kwas alendronowy", "acidum alendronicum"),
             Map.entry("kwas zoledronowy", "acidum zoledronicum"),
             Map.entry("kwas ursodeoksycholowy", "acidum ursodeoxycholicum"),
-            Map.entry("kwas traneksamowy", "acidum tranexamicum"),
             Map.entry("witamina d3", "cholecalciferolum"),
             Map.entry("witamina b12", "cyanocobalaminum"),
             Map.entry("witamina k", "phytomenadionum"),
             Map.entry("adrenalina", "epinephrinum"),
-            Map.entry("noradrenalina", "norepinephrinum"),
-            Map.entry("zelazo", "ferrum"),
-            Map.entry("potas", "kalium"),
-            Map.entry("magnez", "magnesium"),
-            Map.entry("wapn", "calcium"));
+            Map.entry("potas", "kalium"));
 
     private static final int MAX_ALIASES = 3;
 
