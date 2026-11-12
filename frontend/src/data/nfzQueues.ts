@@ -40,17 +40,25 @@ export type NfzQueue = {
   phone: string | null;
   waitDays: number | null;
   awaiting: number | null;
-  accessible: string[];
+  accessible: AccessFeature[];
 };
 
 export class NfzBusyError extends Error {}
 
-const ACCESS_FIELDS = {
+// Udogodnienia, ktore NFZ oddaje przy kazdej kolejce. Klucze sa tez zapisywane
+// w ustawieniach, wiec zmiana nazwy pola unieważnia zapisany wybor.
+export const ACCESS_FEATURES = {
   elevator: "winda",
   ramp: "podjazd",
   "car-park": "parking",
   toilet: "toaleta dla osób z niepełnosprawnością",
 } as const;
+
+export type AccessFeature = keyof typeof ACCESS_FEATURES;
+
+export const ACCESS_FEATURE_KEYS = Object.keys(
+  ACCESS_FEATURES,
+) as AccessFeature[];
 
 export async function fetchNfzQueues(
   benefit: string,
@@ -80,9 +88,9 @@ export async function fetchNfzQueues(
   const parsed = queuesSchema.parse(await response.json());
   const queues = parsed.data.map(({ attributes }, index) => {
     const stats = attributes.statistics?.["provider-data"] ?? null;
-    const accessible = Object.entries(ACCESS_FIELDS)
-      .filter(([field]) => attributes[field as keyof typeof ACCESS_FIELDS] === "Y")
-      .map(([, label]) => label);
+    const accessible = ACCESS_FEATURE_KEYS.filter(
+      (feature) => attributes[feature] === "Y",
+    );
 
     return {
       key: `${attributes.provider}-${index}`,

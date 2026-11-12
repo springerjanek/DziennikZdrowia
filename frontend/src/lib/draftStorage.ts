@@ -13,6 +13,7 @@ import {
 
 const ONBOARDING_KEY = "dz.onboarding.draft.v1";
 const VOIVODESHIP_KEY = "dz.voivodeship.v1";
+const ACCESS_KEY = "dz.access.v1";
 const MEDICATION_KEY = "dz.medication.draft.v1";
 
 function read<T extends object>(
@@ -94,4 +95,19 @@ export function loadVoivodeship(): VoivodeshipCode | null {
 
 export function saveVoivodeship(code: VoivodeshipCode): void {
   write(VOIVODESHIP_KEY, { code });
+}
+
+const accessNeedsSchema = z.object({
+  needs: z.array(z.string()),
+});
+
+// Czego uzytkownik potrzebuje w placowce (winda, podjazd, parking, toaleta).
+// Zostaje na tym urzadzeniu - nie wysylamy tego nigdzie, bo potrzeba windy
+// mowi o zdrowiu, a nie o preferencji interfejsu.
+export function loadAccessNeeds(): string[] {
+  return read(ACCESS_KEY, accessNeedsSchema, { needs: [] }).needs;
+}
+
+export function saveAccessNeeds(needs: string[]): void {
+  write(ACCESS_KEY, { needs });
 }

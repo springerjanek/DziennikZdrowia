@@ -43,7 +43,7 @@
     "sex": "FEMALE",
     "ageFrom": 25,
     "ageTo": 64,
-    "nfzBenefit": null,
+    "nfzBenefit": "PORADNIA POŁOŻNICZO-GINEKOLOGICZNA",
     "sourceUrl": "https://pacjent.gov.pl/print/pdf/node/3941",
     "verifiedAt": "2026-11-02",
     "intervals": [

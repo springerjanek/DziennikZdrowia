@@ -1,12 +1,17 @@
 import { Accessibility, MapPin, Phone } from "lucide-react";
 import { useState } from "react";
 import {
+  ACCESS_FEATURES,
   fetchNfzQueues,
   NfzBusyError,
   type NfzQueue,
 } from "@/data/nfzQueues";
 import { formatWaitDays, VOIVODESHIPS, type VoivodeshipCode } from "@/domain";
-import { loadVoivodeship, saveVoivodeship } from "@/lib/draftStorage";
+import {
+  loadAccessNeeds,
+  loadVoivodeship,
+  saveVoivodeship,
+} from "@/lib/draftStorage";
 
 type Props = {
   benefit: string;
@@ -14,8 +19,25 @@ type Props = {
 
 type Status = "idle" | "loading" | "ok" | "busy" | "error";
 
+function meetsNeeds(queue: NfzQueue, needs: string[]): boolean {
+  return needs.every((need) =>
+    queue.accessible.some((feature) => feature === need),
+  );
+}
+
+// Stabilny sort, wiec w obu grupach zostaje kolejnosc wg czasu oczekiwania.
+function sortForNeeds(queues: NfzQueue[], needs: string[]): NfzQueue[] {
+  if (needs.length === 0) {
+    return queues;
+  }
+  return [...queues].sort(
+    (first, second) =>
+      Number(meetsNeeds(second, needs)) - Number(meetsNeeds(first, needs)),
+  );
+}
+
 const MESSAGES: Record<string, string> = {
-  busy: "NFZ prosi o chwilę przerwy — spróbuj ponownie za moment.",
+  busy: "Spróbuj ponownie za chwilę.",
   error: "Nie udało się pobrać terminów z NFZ. Spróbuj ponownie później.",
 };
 
@@ -27,12 +49,14 @@ export function NfzQueues({ benefit }: Props) {
   );
   const [status, setStatus] = useState<Status>("idle");
   const [queues, setQueues] = useState<NfzQueue[]>([]);
+  // Z ustawien: placowki, ktore maja to, czego uzytkownik potrzebuje, ida na gore.
+  const needs = loadAccessNeeds();
 
   function load(code: VoivodeshipCode): void {
     setStatus("loading");
     fetchNfzQueues(benefit, code)
       .then((found) => {
-        setQueues(found);
+        setQueues(sortForNeeds(found, needs));
         setStatus("ok");
       })
       .catch((problem: unknown) => {
@@ -127,7 +151,14 @@ export function NfzQueues({ benefit }: Props) {
                 {queue.accessible.length > 0 && (
                   <p className="flex items-center gap-1.5 text-sm text-slate-600">
                     <Accessibility aria-hidden="true" className="size-4" />
-                    {queue.accessible.join(", ")}
+                    {queue.accessible
+                      .map((feature) => ACCESS_FEATURES[feature])
+                      .join(", ")}
+                    {needs.length > 0 && meetsNeeds(queue, needs) && (
+                      <span className="rounded-full bg-success-50 px-2 py-0.5 text-xs font-semibold text-success-700">
+                        spełnia Twoje wymagania
+                      </span>
+                    )}
                   </p>
                 )}
               </li>
