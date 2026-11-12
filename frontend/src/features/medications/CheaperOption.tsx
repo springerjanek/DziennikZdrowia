@@ -1,6 +1,14 @@
-import { CalendarPlus, PiggyBank } from "lucide-react";
+import { Barcode, CalendarPlus, PiggyBank } from "lucide-react";
 import { useState } from "react";
-import { addDays, formatZloty, toIsoDate, type Savings } from "@/domain";
+import { EanBarcode } from "@/components/EanBarcode";
+import { Modal } from "@/components/Modal";
+import {
+  addDays,
+  formatZloty,
+  toEan13,
+  toIsoDate,
+  type Savings,
+} from "@/domain";
 import { buildIcs, downloadIcs } from "@/lib/calendarEvent";
 
 type Props = {
@@ -17,6 +25,9 @@ export function CheaperOption({ medicationName, savings }: Props) {
   const [day, setDay] = useState(
     addDays(toIsoDate(new Date()), DEFAULT_DAYS_AHEAD),
   );
+
+  const [showingCode, setShowingCode] = useState(false);
+  const scannable = best.ean !== null && toEan13(best.ean) !== null;
 
   function addToCalendar(): void {
     const what =
@@ -92,7 +103,33 @@ export function CheaperOption({ medicationName, savings }: Props) {
           <CalendarPlus aria-hidden="true" className="size-5" />
           Dodaj do kalendarza
         </button>
+        {scannable && (
+          <button
+            type="button"
+            onClick={() => setShowingCode(true)}
+            className="inline-flex min-h-11 items-center gap-2 rounded-field border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <Barcode aria-hidden="true" className="size-5" />
+            Pokaż kod w aptece
+          </button>
+        )}
       </div>
+
+      {showingCode && best.ean !== null && (
+        <Modal title="Kod dla farmaceuty" onClose={() => setShowingCode(false)}>
+          <div className="flex flex-col gap-4 text-slate-900">
+            <p className="font-medium">
+              {best.kind === "pack" ? medicationName : best.name},{" "}
+              {best.packSize}
+            </p>
+            <EanBarcode gtin={best.ean} />
+            <p className="text-sm text-slate-600">
+              To kod z pudełka tego opakowania. Farmaceuta może go zeskanować z
+              ekranu i od razu zobaczy właściwy lek.
+            </p>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
