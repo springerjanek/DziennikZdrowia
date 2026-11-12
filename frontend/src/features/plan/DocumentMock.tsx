@@ -1,10 +1,16 @@
-import { FileText, Paperclip, Trash2 } from "lucide-react";
+import { ChevronRight, FileText, Paperclip, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Modal } from "@/components/Modal";
+import { DocumentDetails } from "./DocumentDetails";
 
 type Picked = {
   key: string;
-  name: string;
-  size: number;
+  file: File;
+};
+
+type Opened = {
+  file: File;
+  url: string;
 };
 
 function formatSize(bytes: number): string {
@@ -20,6 +26,20 @@ function formatSize(bytes: number): string {
 // to dane o zdrowiu z art. 9 RODO, wiec nie wrzucamy ich nigdzie "na probe".
 export function DocumentMock() {
   const [picked, setPicked] = useState<Picked[]>([]);
+  const [opened, setOpened] = useState<Opened | null>(null);
+
+  // Adres pliku powstaje przy otwarciu okienka i ginie przy zamknieciu -
+  // w handlerze, nie w efekcie, zeby StrictMode nie zwolnil go przedwczesnie.
+  function open(file: File): void {
+    setOpened({ file, url: URL.createObjectURL(file) });
+  }
+
+  function close(): void {
+    if (opened !== null) {
+      URL.revokeObjectURL(opened.url);
+    }
+    setOpened(null);
+  }
 
   return (
     <section className="flex flex-col gap-3 rounded-card border border-dashed border-slate-400 bg-slate-50 p-4">
@@ -33,12 +53,6 @@ export function DocumentMock() {
         </p>
       </div>
 
-      <p className="text-sm text-slate-600">
-        Tak ma wyglądać dołączanie wyników badań. Na razie{" "}
-        <strong>pliki nie są nigdzie wysyłane</strong> — zostają w tej karcie
-        przeglądarki i znikają po odświeżeniu strony.
-      </p>
-
       <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 self-start rounded-field border border-slate-300 bg-white px-4 py-2 font-medium text-slate-700 hover:bg-slate-100">
         <FileText aria-hidden="true" className="size-5" />
         Wybierz plik
@@ -50,8 +64,7 @@ export function DocumentMock() {
           onChange={(event) => {
             const files = [...(event.target.files ?? [])].map((file) => ({
               key: `${file.name}-${file.lastModified}`,
-              name: file.name,
-              size: file.size,
+              file,
             }));
             setPicked((current) => [...current, ...files]);
             event.target.value = "";
@@ -63,13 +76,26 @@ export function DocumentMock() {
         <ul className="flex flex-col gap-2">
           {picked.map((file) => (
             <li key={file.key} className="flex flex-wrap items-center gap-2">
-              <span className="min-w-0 flex-1 text-sm">
-                <span className="font-medium">{file.name}</span>{" "}
-                <span className="text-slate-500">({formatSize(file.size)})</span>
-              </span>
               <button
                 type="button"
-                aria-label={`Usuń ${file.name}`}
+                aria-label={`Otwórz ${file.file.name}`}
+                onClick={() => open(file.file)}
+                className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-field px-2 py-2 text-left text-sm hover:bg-white"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="font-medium">{file.file.name}</span>{" "}
+                  <span className="text-slate-500">
+                    ({formatSize(file.file.size)})
+                  </span>
+                </span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="size-5 shrink-0 text-slate-400"
+                />
+              </button>
+              <button
+                type="button"
+                aria-label={`Usuń ${file.file.name}`}
                 onClick={() =>
                   setPicked((current) =>
                     current.filter((other) => other.key !== file.key),
@@ -88,9 +114,14 @@ export function DocumentMock() {
       <p className="text-sm text-slate-500">
         Żeby to działało naprawdę, backend potrzebuje miejsca na pliki i
         odpowiedzi na pytanie, co się z nimi dzieje przy usunięciu konta. Wynik
-        badania to dane o zdrowiu (art. 9 RODO), więc nie trzymamy ich „na
-        próbę".
+        badania to dane o zdrowiu (art. 9 RODO).
       </p>
+
+      {opened !== null && (
+        <Modal title={opened.file.name} onClose={close} wide>
+          <DocumentDetails file={opened.file} url={opened.url} />
+        </Modal>
+      )}
     </section>
   );
 }
