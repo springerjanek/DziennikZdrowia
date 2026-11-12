@@ -1,6 +1,10 @@
 import { Clock, MapPin, Phone, Users } from "lucide-react";
 import { useState } from "react";
-import { fetchNearestSor, type NearestSor } from "@/data/sor";
+import {
+  fetchNearestSor,
+  lastNearestSor,
+  type NearestSor,
+} from "@/data/sor";
 import { formatDistance, formatFetchedAt, formatWait } from "@/domain";
 import { ApiError } from "@/lib/api";
 
@@ -22,8 +26,10 @@ const MESSAGES: Record<string, string> = {
 };
 
 export function SorPage() {
-  const [status, setStatus] = useState<Status>("idle");
-  const [result, setResult] = useState<NearestSor | null>(null);
+  const [result, setResult] = useState<NearestSor | null>(lastNearestSor);
+  const [status, setStatus] = useState<Status>(
+    result === null ? "idle" : "ok",
+  );
 
   function load(latitude: number, longitude: number): void {
     setStatus("loading");
@@ -97,7 +103,9 @@ export function SorPage() {
           ? "Sprawdzam, gdzie jesteś…"
           : status === "loading"
             ? "Sprawdzam kolejki…"
-            : "Pokaż najbliższe SOR-y"}
+            : result === null
+              ? "Pokaż najbliższe SOR-y"
+              : "Sprawdź jeszcze raz"}
       </button>
 
       {MESSAGES[status] !== undefined && (
