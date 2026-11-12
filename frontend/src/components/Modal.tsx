@@ -33,7 +33,7 @@ export function Modal({ title, onClose, children, wide = false }: ModalProps) {
       }}
       // Na telefonie okienko zajmuje caly ekran - tresc i tak nie miesci sie w
       // kartce na srodku, a mniejsze okno zostawia tylko waski pasek do czytania.
-      className={`m-0 h-full max-h-full w-full max-w-none overflow-y-auto bg-white backdrop:bg-slate-900/40 sm:m-auto sm:h-auto sm:max-h-[85vh] sm:rounded-card ${
+      className={`m-0 h-full max-h-full w-full max-w-none overflow-y-auto bg-white backdrop:bg-slate-900/40 sm:m-auto sm:h-fit sm:max-h-[85vh] sm:rounded-card ${
         wide
           ? "sm:w-[min(56rem,calc(100vw-2rem))]"
           : "sm:w-[min(34rem,calc(100vw-2rem))]"
