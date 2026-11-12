@@ -137,7 +137,9 @@ export function MedicationCard({
         )}
       </ReimbursementExplainer>
 
-      {savings !== null && !free && <CheaperOption savings={savings} />}
+      {savings !== null && !free && (
+        <CheaperOption medicationName={medication.name} savings={savings} />
+      )}
 
       <PharmacyLink name={medication.name} note={false} />
 
