@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useLoaderData, useRevalidator } from "react-router";
 import { recordScreening, type UserScreening } from "@/data/screeningHistory";
 import { toIsoDate } from "@/domain";
+import { DocumentMock } from "@/features/plan/DocumentMock";
 import { HistoryEntry } from "@/features/plan/HistoryEntry";
 import type { historyLoader } from "./historyLoader";
 
@@ -139,6 +140,8 @@ export function HistoryPage() {
           </p>
         )}
       </form>
+
+      <DocumentMock />
 
       {years.length === 0 ? (
         <p className="text-slate-600">
