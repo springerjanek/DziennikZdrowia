@@ -1,4 +1,5 @@
-import { useEffect, useId, useState } from "react";
+import { ScanBarcode } from "lucide-react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { MIN_QUERY_LENGTH, searchMedications } from "@/data/medications";
 import {
   formatEan,
@@ -14,6 +15,8 @@ import {
   type Medication,
   type MedicationGroup,
 } from "@/domain";
+import { canScanBarcodes } from "@/lib/barcodeDetector";
+import { BarcodeScanner } from "./BarcodeScanner";
 
 const DEBOUNCE_MS = 300;
 
@@ -187,6 +190,15 @@ export function MedicationSearch({
   const [search, setSearch] = useState<Search>({ kind: "idle" });
   // Nazwa rozwinietej grupy; naraz otwarta jest jedna, zeby lista nie urosla z powrotem.
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+
+  // Wyszukiwarka znajduje lek po samym numerze z kodu, wiec zeskanowany numer
+  // wystarczy wpisac w pole. useCallback, bo skaner trzyma te funkcje w
+  // zaleznosciach efektu - nowa przy kazdym renderze restartowalaby kamere.
+  const handleScan = useCallback((code: string) => {
+    setQuery(code);
+    setScanning(false);
+  }, []);
 
   useEffect(() => {
     const needle = query.trim();
@@ -243,6 +255,21 @@ export function MedicationSearch({
           onChange={(event) => setQuery(event.target.value)}
           className="min-h-11 w-full rounded-field border border-slate-300 bg-white px-3 py-2.5 placeholder:text-slate-400"
         />
+        <p className="text-sm text-slate-500">
+          Możesz też wpisać numer spod kodu kreskowego na pudełku.
+        </p>
+        {canScanBarcodes() && (
+          <button
+            type="button"
+            aria-expanded={scanning}
+            onClick={() => setScanning(!scanning)}
+            className="inline-flex min-h-11 items-center gap-2 self-start rounded-field border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <ScanBarcode aria-hidden="true" className="size-5" />
+            {scanning ? "Zamknij aparat" : "Zeskanuj kod z pudełka"}
+          </button>
+        )}
+        {scanning && <BarcodeScanner onDetected={handleScan} />}
       </div>
 
       {searching && search.kind === "loading" && <ResultsSkeleton />}
