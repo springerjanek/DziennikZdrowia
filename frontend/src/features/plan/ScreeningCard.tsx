@@ -10,6 +10,7 @@ import {
 } from "@/domain";
 import { formatInterval } from "@/lib/plural";
 import { NfzQueues } from "./NfzQueues";
+import { PozClinics } from "./PozClinics";
 
 type Props = {
   screening: DueScreening;
@@ -137,8 +138,10 @@ export function ScreeningCard({ screening }: Props) {
         </button>
       )}
 
-      {screening.nfzBenefit !== null && (
+      {screening.nfzBenefit !== null ? (
         <NfzQueues benefit={screening.nfzBenefit} />
+      ) : (
+        <PozClinics />
       )}
     </li>
   );

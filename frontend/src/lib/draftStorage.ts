@@ -13,6 +13,7 @@ import {
 
 const ONBOARDING_KEY = "dz.onboarding.draft.v1";
 const VOIVODESHIP_KEY = "dz.voivodeship.v1";
+const LOCALITY_KEY = "dz.locality.v1";
 const ACCESS_KEY = "dz.access.v1";
 const MEDICATION_KEY = "dz.medication.draft.v1";
 
@@ -95,6 +96,21 @@ export function loadVoivodeship(): VoivodeshipCode | null {
 
 export function saveVoivodeship(code: VoivodeshipCode): void {
   write(VOIVODESHIP_KEY, { code });
+}
+
+const localityStoreSchema = z.object({
+  name: z.string().max(120).nullable(),
+});
+
+// Tak samo jak wojewodztwo: do czasu #21 miejscowosc bierzemy z kreatora,
+// a zmiane na ekranie przychodni pamietamy na tym urzadzeniu.
+export function loadLocality(): string {
+  const stored = read(LOCALITY_KEY, localityStoreSchema, { name: null });
+  return stored.name ?? loadDraft().locality;
+}
+
+export function saveLocality(name: string): void {
+  write(LOCALITY_KEY, { name });
 }
 
 const accessNeedsSchema = z.object({
