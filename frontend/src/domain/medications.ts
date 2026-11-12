@@ -20,6 +20,8 @@ export const indicationSchema = z.object({
   text: z.string(),
   level: reimbursementLevelSchema,
   patientSurcharge: z.number().nullable(),
+  // Cena detaliczna opakowania z obwieszczenia; null dla lekow spoza wykazu.
+  retailPrice: z.number().nullable(),
 });
 
 export type Indication = z.infer<typeof indicationSchema>;
@@ -40,6 +42,10 @@ export const medicationSchema = z.object({
   name: z.string().min(1),
   activeSubstance: z.string().nullable(),
   packSize: z.string().nullable(),
+  retailPrice: z.number().nullable(),
+  // Kod ATC z Rejestru Produktow Leczniczych. Nie pokazujemy go uzytkownikowi -
+  // posluzy do szukania zamiennikow przy lekach zlozonych.
+  atc: z.string().nullable(),
   reimbursement: reimbursementSchema,
 });
 
@@ -69,6 +75,8 @@ export function manualMedication(name: string): Medication {
     name: name.trim(),
     activeSubstance: null,
     packSize: null,
+    retailPrice: null,
+    atc: null,
     reimbursement: {
       level: "full",
       freeFor: [],
@@ -183,6 +191,38 @@ export function formatPackSurcharge(medication: Medication): string | null {
   return amounts.some((amount) => amount !== lowest)
     ? `od ${formatZloty(lowest)} zł`
     : `${formatZloty(lowest)} zł`;
+}
+
+// Ile opakowanie kosztowaloby bez refundacji. Pokazujemy to tylko wtedy, gdy
+// refundacja faktycznie obniza cene - inaczej "zamiast" nie ma czego przeciwstawic.
+export function formatPackSaving(medication: Medication): string | null {
+  const price = medication.retailPrice;
+  const amounts = surcharges(medication);
+  if (price === null || amounts.length === 0) {
+    return null;
+  }
+  return price > Math.min(...amounts) ? `${formatZloty(price)} zł` : null;
+}
+
+// Gotowe zdanie o koszcie leku juz zapisanego: tam cena siedzi tylko przy
+// wskazaniach, bo zalezy od tego, na co lek jest brany.
+export function formatReimbursementCost(
+  reimbursement: Reimbursement,
+): string | null {
+  const prices = reimbursement.indications
+    .map((indication) => indication.retailPrice)
+    .filter((price) => price !== null);
+  const amounts = reimbursement.indications
+    .map((indication) => indication.patientSurcharge)
+    .filter((amount) => amount !== null);
+  if (amounts.length === 0) {
+    return null;
+  }
+  const surcharge = Math.min(...amounts);
+  const price = prices.length === 0 ? null : Math.min(...prices);
+  return price !== null && price > surcharge
+    ? `zapłacisz ${formatZloty(surcharge)} zł zamiast ${formatZloty(price)} zł`
+    : `zapłacisz ${formatZloty(surcharge)} zł`;
 }
 
 export function packCountLabel(count: number): string {

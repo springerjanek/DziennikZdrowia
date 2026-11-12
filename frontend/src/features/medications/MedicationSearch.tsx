@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from "react";
 import { MIN_QUERY_LENGTH, searchMedications } from "@/data/medications";
 import {
   formatEan,
+  formatPackSaving,
   formatPackSurcharge,
   formatSurcharge,
   groupByName,
@@ -118,10 +119,13 @@ function GroupRow({ group, open, onToggle, isAdded, onAdd }: GroupRowProps) {
         <ul className="flex flex-col gap-1 pl-4">
           {group.options.map((pack) => {
             const packSurcharge = formatPackSurcharge(pack);
+            const saving = formatPackSaving(pack);
             const subtitle = [
               packSurcharge === null
                 ? reimbursementLabel(pack.reimbursement.level)
-                : `zapłacisz ${packSurcharge}`,
+                : saving === null
+                  ? `zapłacisz ${packSurcharge}`
+                  : `zapłacisz ${packSurcharge} zamiast ${saving}`,
               pack.ean !== null && needsEanToTellApart(group.options, pack)
                 ? `kod EAN ${formatEan(pack.ean)}`
                 : null,

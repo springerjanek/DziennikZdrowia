@@ -65,8 +65,11 @@ export function draftFromMedication(
       ean: medication.gtin,
       name: medication.name,
       activeSubstance: medication.activeSubstance,
-      // Wielkosc opakowania jest tylko w wykazie, przy zapisanym leku jej nie mamy.
+      // Wielkosc opakowania, cena i ATC sa tylko w wykazie - przy zapisanym leku
+      // zostaje sama odplatnosc, bo tylko ona wraca z naszego API.
       packSize: null,
+      retailPrice: null,
+      atc: null,
       reimbursement: medication.reimbursement,
     },
     scheduleType: medication.scheduleType,

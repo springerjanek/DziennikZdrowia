@@ -5,6 +5,7 @@ import { deleteUserMedication } from "@/data/userMedications";
 import {
   describeSchedule,
   formatDose,
+  formatReimbursementCost,
   formatDoseTime,
   reimbursementLabel,
   type UserMedication,
@@ -20,6 +21,7 @@ export function MedicationCard({ medication, onEdit }: MedicationCardProps) {
   // Dwa klikniecia zamiast okienka z potwierdzeniem, tak samo jak w historii badan.
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const cost = formatReimbursementCost(medication.reimbursement);
 
   function remove(): void {
     setError(null);
@@ -106,6 +108,7 @@ export function MedicationCard({ medication, onEdit }: MedicationCardProps) {
 
       <p className="text-sm text-slate-500">
         Odpłatność: {reimbursementLabel(medication.reimbursement.level)}
+        {cost !== null && ` — ${cost}`}
       </p>
 
       {error !== null && (
