@@ -119,6 +119,14 @@ export function weekRangeLabel(day: string): string {
 }
 
 // "czwartek, 26 listopada 2026"
+export function longDateLabel(day: string): string {
+  return parseIsoDate(day).toLocaleDateString("pl-PL", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export function fullDateLabel(day: string): string {
   return parseIsoDate(day).toLocaleDateString("pl-PL", {
     weekday: "long",

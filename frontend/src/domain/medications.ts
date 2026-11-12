@@ -163,7 +163,18 @@ export function groupByName(medications: Medication[]): MedicationGroup[] {
   return [...groups.values()];
 }
 
-function formatZloty(amount: number): string {
+export function entitlementLabel(code: EntitlementCode): string {
+  switch (code) {
+    case "S":
+      return "osób po 65. roku życia";
+    case "DZ":
+      return "osób do 18. roku życia";
+    case "C":
+      return "kobiet w ciąży";
+  }
+}
+
+export function formatZloty(amount: number): string {
   return amount.toLocaleString("pl-PL", { minimumFractionDigits: 2 });
 }
 

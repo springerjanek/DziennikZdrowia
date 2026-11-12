@@ -1,6 +1,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useRevalidator } from "react-router";
+import { PharmacyLink } from "@/components/PharmacyLink";
 import { deleteUserMedication } from "@/data/userMedications";
 import {
   describeSchedule,
@@ -10,6 +11,7 @@ import {
   reimbursementLabel,
   type UserMedication,
 } from "@/domain";
+import { ReimbursementExplainer } from "./ReimbursementExplainer";
 
 type MedicationCardProps = {
   medication: UserMedication;
@@ -106,10 +108,12 @@ export function MedicationCard({ medication, onEdit }: MedicationCardProps) {
         <p className="text-sm text-slate-500">{medication.notes}</p>
       )}
 
-      <p className="text-sm text-slate-500">
+      <ReimbursementExplainer reimbursement={medication.reimbursement}>
         Odpłatność: {reimbursementLabel(medication.reimbursement.level)}
         {cost !== null && ` — ${cost}`}
-      </p>
+      </ReimbursementExplainer>
+
+      <PharmacyLink name={medication.name} note={false} />
 
       {error !== null && (
         <p role="alert" className="text-sm text-danger-600">
