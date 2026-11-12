@@ -44,6 +44,16 @@ export const router = createBrowserRouter([
         },
       },
       {
+        path: "historia",
+        lazy: async () => {
+          const [{ HistoryPage }, { historyLoader }] = await Promise.all([
+            import("@/pages/HistoryPage"),
+            import("@/pages/historyLoader"),
+          ]);
+          return { Component: HistoryPage, loader: historyLoader };
+        },
+      },
+      {
         path: "sor",
         lazy: async () => {
           const { SorPage } = await import("@/pages/SorPage");
