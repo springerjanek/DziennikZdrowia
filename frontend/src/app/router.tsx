@@ -4,10 +4,11 @@ export const router = createBrowserRouter([
   {
     path: "/",
     lazy: async () => {
-      const { OnboardingPage } = await import(
-        "@/features/onboarding/OnboardingPage"
-      );
-      return { Component: OnboardingPage };
+      const [{ OnboardingPage }, { onboardingLoader }] = await Promise.all([
+        import("@/features/onboarding/OnboardingPage"),
+        import("@/pages/onboardingLoader"),
+      ]);
+      return { Component: OnboardingPage, loader: onboardingLoader };
     },
   },
   {
