@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLoaderData } from "react-router";
 import type { UserMedication } from "@/domain";
 import { MedicationList } from "@/features/medications/MedicationList";
+import { SavingsSummary } from "@/features/medications/SavingsSummary";
 import { AddMedicationDialog } from "@/features/medications/AddMedicationDialog";
 import { EditMedicationDialog } from "@/features/medications/EditMedicationDialog";
 import {
@@ -22,7 +23,7 @@ type Editing = {
 };
 
 export function MedicationsPage() {
-  const { medications, entitlements } =
+  const { medications, entitlements, savings } =
     useLoaderData<typeof medicationsLoader>();
   const [adding, setAdding] = useState(false);
   // Szkic zyje tutaj, a nie w okienku, wiec zamkniecie modala niczego nie kasuje.
@@ -76,9 +77,12 @@ export function MedicationsPage() {
         </button>
       </div>
 
+      <SavingsSummary savings={Object.values(savings)} />
+
       <MedicationList
         medications={medications}
         entitlements={entitlements}
+        savings={savings}
         onEdit={startEdit}
       />
 

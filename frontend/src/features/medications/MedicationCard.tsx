@@ -10,20 +10,24 @@ import {
   formatDoseTime,
   freeForUser,
   type EntitlementCode,
+  type Savings,
   reimbursementLabel,
   type UserMedication,
 } from "@/domain";
+import { CheaperOption } from "./CheaperOption";
 import { ReimbursementExplainer } from "./ReimbursementExplainer";
 
 type MedicationCardProps = {
   medication: UserMedication;
   entitlements: EntitlementCode[];
+  savings: Savings | null;
   onEdit: () => void;
 };
 
 export function MedicationCard({
   medication,
   entitlements,
+  savings,
   onEdit,
 }: MedicationCardProps) {
   const revalidator = useRevalidator();
@@ -132,6 +136,8 @@ export function MedicationCard({
           </>
         )}
       </ReimbursementExplainer>
+
+      {savings !== null && !free && <CheaperOption savings={savings} />}
 
       <PharmacyLink name={medication.name} note={false} />
 
