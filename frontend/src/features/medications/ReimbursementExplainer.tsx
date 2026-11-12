@@ -4,13 +4,16 @@ import { Modal } from "@/components/Modal";
 import {
   entitlementLabel,
   formatZloty,
+  freeForUser,
   longDateLabel,
   reimbursementLabel,
+  type EntitlementCode,
   type Reimbursement,
 } from "@/domain";
 
 type Props = {
   reimbursement: Reimbursement;
+  entitlements: EntitlementCode[];
   children: React.ReactNode;
 };
 
@@ -21,10 +24,15 @@ function fullPrice(reimbursement: Reimbursement): number | null {
   return prices.length === 0 ? null : Math.min(...prices);
 }
 
-export function ReimbursementExplainer({ reimbursement, children }: Props) {
+export function ReimbursementExplainer({
+  reimbursement,
+  entitlements,
+  children,
+}: Props) {
   const [open, setOpen] = useState(false);
   const price = fullPrice(reimbursement);
   const refunded = reimbursement.level !== "full";
+  const free = freeForUser(reimbursement, entitlements);
 
   // Sama data wykazu nie tlumaczy niczego przy leku bez refundacji - nie ma
   // wtedy ani warunku recepty, ani roznicy w cenie.
@@ -62,7 +70,7 @@ export function ReimbursementExplainer({ reimbursement, children }: Props) {
               </p>
             )}
 
-            {refunded ? (
+            {refunded && !free ? (
               <p>
                 Obowiązuje przy recepcie z tym poziomem odpłatności.
                 {price !== null && (
@@ -73,13 +81,15 @@ export function ReimbursementExplainer({ reimbursement, children }: Props) {
                 )}
               </p>
             ) : (
-              <p>Ten lek nie jest refundowany — płacisz pełną cenę.</p>
+              !free && <p>Ten lek nie jest refundowany — płacisz pełną cenę.</p>
             )}
 
             {reimbursement.indications.length > 0 && (
               <div className="flex flex-col gap-2">
                 <p className="font-medium">
-                  Ile zapłacisz, zależy od rozpoznania na recepcie:
+                  {reimbursement.indications.length > 1
+                    ? "Ile zapłacisz, zależy od rozpoznania na recepcie:"
+                    : "Wskazanie objęte refundacją:"}
                 </p>
                 <ul className="flex flex-col gap-1.5">
                   {reimbursement.indications.map((indication) => (
@@ -94,11 +104,18 @@ export function ReimbursementExplainer({ reimbursement, children }: Props) {
               </div>
             )}
 
-            {reimbursement.freeFor.length > 0 && (
-              <p className="rounded-field bg-success-50 px-3 py-2 text-success-700">
-                Bezpłatnie dla{" "}
-                {reimbursement.freeFor.map(entitlementLabel).join(", ")}.
+            {free ? (
+              <p className="rounded-field bg-success-50 px-3 py-2 font-medium text-success-700">
+                Ten lek przysługuje Ci bezpłatnie — przy recepcie z adnotacją o
+                uprawnieniu zapłacisz 0 zł.
               </p>
+            ) : (
+              reimbursement.freeFor.length > 0 && (
+                <p className="rounded-field bg-slate-100 px-3 py-2">
+                  Bezpłatnie dla{" "}
+                  {reimbursement.freeFor.map(entitlementLabel).join(", ")}.
+                </p>
+              )
             )}
 
             <p className="text-slate-500">

@@ -22,7 +22,8 @@ type Editing = {
 };
 
 export function MedicationsPage() {
-  const medications = useLoaderData<typeof medicationsLoader>();
+  const { medications, entitlements } =
+    useLoaderData<typeof medicationsLoader>();
   const [adding, setAdding] = useState(false);
   // Szkic zyje tutaj, a nie w okienku, wiec zamkniecie modala niczego nie kasuje.
   // Zapis w localStorage dokłada do tego odswiezenie strony i zmiane zakladki.
@@ -75,7 +76,11 @@ export function MedicationsPage() {
         </button>
       </div>
 
-      <MedicationList medications={medications} onEdit={startEdit} />
+      <MedicationList
+        medications={medications}
+        entitlements={entitlements}
+        onEdit={startEdit}
+      />
 
       {adding && (
         <AddMedicationDialog

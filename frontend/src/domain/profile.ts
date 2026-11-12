@@ -59,6 +59,28 @@ export function ageInYearsCompleted(birth: BirthDate, today = new Date()): numbe
   return Math.floor(totalMonths / 12)
 }
 
+export function savedEntitlements(
+  birthYear: number | null,
+  birthMonth: number | null,
+  today = new Date(),
+): EntitlementCode[] {
+  if (birthYear === null || birthMonth === null) {
+    return [];
+  }
+  const age = ageInYearsCompleted(
+    { year: birthYear, month: birthMonth },
+    today,
+  );
+  const codes: EntitlementCode[] = [];
+  if (age >= 65) {
+    codes.push("S");
+  }
+  if (age < 18) {
+    codes.push("DZ");
+  }
+  return codes;
+}
+
 export function entitlements(
   profile: HealthProfile,
   today = new Date(),

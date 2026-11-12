@@ -163,6 +163,13 @@ export function groupByName(medications: Medication[]): MedicationGroup[] {
   return [...groups.values()];
 }
 
+export function freeForUser(
+  reimbursement: Reimbursement,
+  codes: EntitlementCode[],
+): boolean {
+  return codes.some((code) => reimbursement.freeFor.includes(code));
+}
+
 export function entitlementLabel(code: EntitlementCode): string {
   switch (code) {
     case "S":
