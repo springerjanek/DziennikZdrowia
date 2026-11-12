@@ -20,6 +20,11 @@ import { BarcodeScanner } from "./BarcodeScanner";
 
 const DEBOUNCE_MS = 300;
 
+// Numer z kodu kreskowego nie jest nazwa leku - nie proponujemy dodania go recznie.
+function looksLikeBarcode(text: string): boolean {
+  return /^\d{8,14}$/.test(text);
+}
+
 type Search =
   | { kind: "idle" }
   | { kind: "loading" }
@@ -309,24 +314,33 @@ export function MedicationSearch({
         </ul>
       )}
 
-      {searching && (nothingFound || search.kind === "error") && (
-        <div className="flex flex-col gap-2 rounded-card border border-slate-200 bg-white p-4">
-          <p className="text-sm text-slate-600">
-            Nie znaleźliśmy „{needle}" w wykazie. Możesz dodać ten lek sam — nie
-            pokażemy wtedy refundacji.
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              onPick(manualMedication(needle));
-              setQuery("");
-            }}
-            className="inline-flex min-h-11 items-center self-start rounded-field border border-brand-600 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
-          >
-            Dodaj „{needle}"
-          </button>
-        </div>
+      {searching && nothingFound && looksLikeBarcode(needle) && (
+        <p className="rounded-card border border-slate-200 bg-white p-4 text-sm text-slate-600">
+          Nie mamy leku o kodzie {needle}. W wykazie są głównie leki na
+          receptę — lek bez recepty wpisz po nazwie z pudełka.
+        </p>
       )}
+
+      {searching &&
+        !looksLikeBarcode(needle) &&
+        (nothingFound || search.kind === "error") && (
+          <div className="flex flex-col gap-2 rounded-card border border-slate-200 bg-white p-4">
+            <p className="text-sm text-slate-600">
+              Nie znaleźliśmy „{needle}" w wykazie. Możesz dodać ten lek sam — nie
+              pokażemy wtedy refundacji.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                onPick(manualMedication(needle));
+                setQuery("");
+              }}
+              className="inline-flex min-h-11 items-center self-start rounded-field border border-brand-600 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
+            >
+              Dodaj „{needle}"
+            </button>
+          </div>
+        )}
     </div>
   );
 }
