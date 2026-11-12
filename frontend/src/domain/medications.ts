@@ -229,11 +229,18 @@ export function formatReimbursementCost(
   if (amounts.length === 0) {
     return null;
   }
-  const surcharge = Math.min(...amounts);
+  const lowest = Math.min(...amounts);
+  const highest = Math.max(...amounts);
+  // Jak w formatPackSurcharge: przy roznych doplatach "od", bo ktora obowiazuje,
+  // zalezy od rozpoznania na recepcie - a tego nie wiemy.
+  const cost =
+    lowest === highest
+      ? `${formatZloty(lowest)} zł`
+      : `od ${formatZloty(lowest)} zł`;
   const price = prices.length === 0 ? null : Math.min(...prices);
-  return price !== null && price > surcharge
-    ? `zapłacisz ${formatZloty(surcharge)} zł zamiast ${formatZloty(price)} zł`
-    : `zapłacisz ${formatZloty(surcharge)} zł`;
+  return price !== null && price > lowest
+    ? `zapłacisz ${cost} zamiast ${formatZloty(price)} zł`
+    : `zapłacisz ${cost}`;
 }
 
 export function packCountLabel(count: number): string {
