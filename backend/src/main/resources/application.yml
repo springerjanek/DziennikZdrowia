@@ -77,6 +77,10 @@ app:
     initial-delay: PT10S
     check-interval: PT24H
 
+  # Rejestr Produktow Leczniczych: pelny eksport CSV, z ktorego importer bierze kody ATC po GTIN.
+  rpl:
+    csv-url: https://rejestrymedyczne.ezdrowie.gov.pl/api/rpl/medicinal-products/public-pl-report/get-csv
+
   # Slownik nazw lekow z API NFZ (leki, ktore byly kiedys refundowane w aptekach).
   nfz:
     api-url: https://api.nfz.gov.pl/app-stat-api-ra

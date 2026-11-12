@@ -14,6 +14,7 @@ public record ReimbursementInfo(
         LocalDate announcementDate,
         List<Indication> indications) {
 
-    public record Indication(String text, String level, BigDecimal patientSurcharge) {
+    /** {@code retailPrice} to cena opakowania; w obwieszczeniu jest taka sama we wszystkich wskazaniach GTIN-u. */
+    public record Indication(String text, String level, BigDecimal patientSurcharge, BigDecimal retailPrice) {
     }
 }

@@ -22,6 +22,8 @@ public interface CatalogMedicationRepository extends JpaRepository<CatalogMedica
     @Query("select max(m.announcementDate) from CatalogMedication m")
     Optional<LocalDate> findCurrentAnnouncementDate();
 
+    boolean existsByAtcIsNotNull();
+
     @Query("select e from CatalogEntitlement e where e.gtin in :gtins")
     List<CatalogEntitlement> findEntitlements(@Param("gtins") Collection<String> gtins);
 
