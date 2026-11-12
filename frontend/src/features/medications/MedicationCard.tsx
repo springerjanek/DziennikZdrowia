@@ -15,6 +15,7 @@ import {
   type UserMedication,
 } from "@/domain";
 import { CheaperOption } from "./CheaperOption";
+import { PrescriptionReminder } from "./PrescriptionReminder";
 import { ReimbursementExplainer } from "./ReimbursementExplainer";
 
 type MedicationCardProps = {
@@ -142,6 +143,12 @@ export function MedicationCard({
       )}
 
       <PharmacyLink name={medication.name} note={false} />
+
+      {/* GTIN maja tylko leki z wykazu refundacyjnego, czyli na recepte.
+          Przy leku dopisanym recznie nie wiemy, czy recepta jest potrzebna. */}
+      {medication.gtin !== null && (
+        <PrescriptionReminder medicationName={medication.name} />
+      )}
 
       {error !== null && (
         <p role="alert" className="text-sm text-danger-600">
