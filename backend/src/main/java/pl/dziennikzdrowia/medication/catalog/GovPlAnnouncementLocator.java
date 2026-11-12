@@ -37,7 +37,6 @@ public class GovPlAnnouncementLocator {
             Map.entry("lipca", 7), Map.entry("sierpnia", 8), Map.entry("wrzesnia", 9),
             Map.entry("pazdziernika", 10), Map.entry("listopada", 11), Map.entry("grudnia", 12));
 
-    //przenieść wyżej???
     private final RestClient restClient;
     private final URI listingUrl;
 
