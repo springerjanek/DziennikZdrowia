@@ -47,6 +47,9 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
                         // Wyszukiwarka lekow jest w onboardingu, przed logowaniem; wykaz MZ jest publiczny.
                         .requestMatchers(HttpMethod.GET, "/api/medications/search").permitAll()
+                        // Katalog badan profilaktycznych to publiczne informacje NFZ: bez danych osobowych, tylko odczyt.
+                        // Badania konkretnego uzytkownika (/api/me/screenings) dalej wymagaja logowania.
+                        .requestMatchers(HttpMethod.GET, "/api/screening/rules").permitAll()
                         // Inaczej każdy błąd (400, 403) zamienia się w 401 przy przekierowaniu na /error.
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
