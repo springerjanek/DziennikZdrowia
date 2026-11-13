@@ -1,9 +1,10 @@
-import type { z } from "zod";
+import { z } from "zod";
 import {
   emptyMedicationDraft,
   medicationDraftSchema,
   type MedicationDraft,
 } from "@/features/medications/draft";
+import { voivodeshipCodeSchema, type VoivodeshipCode } from "@/domain";
 import {
   emptyDraft,
   onboardingDraftSchema,
@@ -11,6 +12,8 @@ import {
 } from "@/features/onboarding/draft";
 
 const ONBOARDING_KEY = "dz.onboarding.draft.v1";
+const VOIVODESHIP_KEY = "dz.voivodeship.v1";
+const ACCESS_KEY = "dz.access.v1";
 const MEDICATION_KEY = "dz.medication.draft.v1";
 
 function read<T extends object>(
@@ -77,4 +80,34 @@ export function saveMedicationDraft(draft: MedicationDraft): void {
 
 export function clearMedicationDraft(): void {
   remove(MEDICATION_KEY);
+}
+
+const voivodeshipStoreSchema = z.object({
+  code: voivodeshipCodeSchema.nullable(),
+});
+
+// Do czasu zapisywania lokalizacji w profilu (#21) wojewodztwo bierzemy z tego,
+// co uzytkownik podal w kreatorze, a jego wybor na ekranie placowek pamietamy tutaj.
+export function loadVoivodeship(): VoivodeshipCode | null {
+  const stored = read(VOIVODESHIP_KEY, voivodeshipStoreSchema, { code: null });
+  return stored.code ?? loadDraft().voivodeship;
+}
+
+export function saveVoivodeship(code: VoivodeshipCode): void {
+  write(VOIVODESHIP_KEY, { code });
+}
+
+const accessNeedsSchema = z.object({
+  needs: z.array(z.string()),
+});
+
+// Czego uzytkownik potrzebuje w placowce (winda, podjazd, parking, toaleta).
+// Zostaje na tym urzadzeniu - nie wysylamy tego nigdzie, bo potrzeba windy
+// mowi o zdrowiu, a nie o preferencji interfejsu.
+export function loadAccessNeeds(): string[] {
+  return read(ACCESS_KEY, accessNeedsSchema, { needs: [] }).needs;
+}
+
+export function saveAccessNeeds(needs: string[]): void {
+  write(ACCESS_KEY, { needs });
 }

@@ -26,7 +26,7 @@
     "sex": "FEMALE",
     "ageFrom": 45,
     "ageTo": 74,
-    "nfzBenefit": "MAMMOGRAFIA",
+    "nfzBenefit": "PORADNIA PROFILAKTYKI CHORÓB PIERSI",
     "sourceUrl": "https://pacjent.gov.pl/print/pdf/node/3941",
     "verifiedAt": "2026-11-02",
     "intervals": [
@@ -43,7 +43,7 @@
     "sex": "FEMALE",
     "ageFrom": 25,
     "ageTo": 64,
-    "nfzBenefit": null,
+    "nfzBenefit": "PORADNIA POŁOŻNICZO-GINEKOLOGICZNA",
     "sourceUrl": "https://pacjent.gov.pl/print/pdf/node/3941",
     "verifiedAt": "2026-11-02",
     "intervals": [
@@ -60,7 +60,7 @@
     "sex": null,
     "ageFrom": 50,
     "ageTo": 65,
-    "nfzBenefit": null,
+    "nfzBenefit": "KOLONOSKOPIA",
     "sourceUrl": "https://pacjent.gov.pl/print/pdf/node/3941",
     "verifiedAt": "2026-11-02",
     "intervals": [

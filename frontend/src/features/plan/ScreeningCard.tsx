@@ -9,6 +9,7 @@ import {
   type ScreeningStatus,
 } from "@/domain";
 import { formatInterval } from "@/lib/plural";
+import { NfzQueues } from "./NfzQueues";
 
 type Props = {
   screening: DueScreening;
@@ -134,6 +135,10 @@ export function ScreeningCard({ screening }: Props) {
         >
           Zaznacz jako zrobione
         </button>
+      )}
+
+      {screening.nfzBenefit !== null && (
+        <NfzQueues benefit={screening.nfzBenefit} />
       )}
     </li>
   );
