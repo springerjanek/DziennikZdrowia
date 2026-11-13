@@ -1,4 +1,5 @@
-import { useEffect, useId, useState } from "react";
+import { ScanBarcode } from "lucide-react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { MIN_QUERY_LENGTH, searchMedications } from "@/data/medications";
 import {
   formatEan,
@@ -14,8 +15,15 @@ import {
   type Medication,
   type MedicationGroup,
 } from "@/domain";
+import { canScanBarcodes } from "@/lib/barcodeDetector";
+import { BarcodeScanner } from "./BarcodeScanner";
 
 const DEBOUNCE_MS = 300;
+
+// Numer z kodu kreskowego nie jest nazwa leku - nie proponujemy dodania go recznie.
+function looksLikeBarcode(text: string): boolean {
+  return /^\d{8,14}$/.test(text);
+}
 
 type Search =
   | { kind: "idle" }
@@ -187,6 +195,15 @@ export function MedicationSearch({
   const [search, setSearch] = useState<Search>({ kind: "idle" });
   // Nazwa rozwinietej grupy; naraz otwarta jest jedna, zeby lista nie urosla z powrotem.
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+
+  // Wyszukiwarka znajduje lek po samym numerze z kodu, wiec zeskanowany numer
+  // wystarczy wpisac w pole. useCallback, bo skaner trzyma te funkcje w
+  // zaleznosciach efektu - nowa przy kazdym renderze restartowalaby kamere.
+  const handleScan = useCallback((code: string) => {
+    setQuery(code);
+    setScanning(false);
+  }, []);
 
   useEffect(() => {
     const needle = query.trim();
@@ -243,6 +260,21 @@ export function MedicationSearch({
           onChange={(event) => setQuery(event.target.value)}
           className="min-h-11 w-full rounded-field border border-slate-300 bg-white px-3 py-2.5 placeholder:text-slate-400"
         />
+        <p className="text-sm text-slate-500">
+          Możesz też wpisać numer spod kodu kreskowego na pudełku.
+        </p>
+        {canScanBarcodes() && (
+          <button
+            type="button"
+            aria-expanded={scanning}
+            onClick={() => setScanning(!scanning)}
+            className="inline-flex min-h-11 items-center gap-2 self-start rounded-field border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          >
+            <ScanBarcode aria-hidden="true" className="size-5" />
+            {scanning ? "Zamknij aparat" : "Zeskanuj kod z pudełka"}
+          </button>
+        )}
+        {scanning && <BarcodeScanner onDetected={handleScan} />}
       </div>
 
       {searching && search.kind === "loading" && <ResultsSkeleton />}
@@ -282,24 +314,33 @@ export function MedicationSearch({
         </ul>
       )}
 
-      {searching && (nothingFound || search.kind === "error") && (
-        <div className="flex flex-col gap-2 rounded-card border border-slate-200 bg-white p-4">
-          <p className="text-sm text-slate-600">
-            Nie znaleźliśmy „{needle}" w wykazie. Możesz dodać ten lek sam — nie
-            pokażemy wtedy refundacji.
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              onPick(manualMedication(needle));
-              setQuery("");
-            }}
-            className="inline-flex min-h-11 items-center self-start rounded-field border border-brand-600 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
-          >
-            Dodaj „{needle}"
-          </button>
-        </div>
+      {searching && nothingFound && looksLikeBarcode(needle) && (
+        <p className="rounded-card border border-slate-200 bg-white p-4 text-sm text-slate-600">
+          Nie mamy leku o kodzie {needle}. W wykazie są głównie leki na
+          receptę — lek bez recepty wpisz po nazwie z pudełka.
+        </p>
       )}
+
+      {searching &&
+        !looksLikeBarcode(needle) &&
+        (nothingFound || search.kind === "error") && (
+          <div className="flex flex-col gap-2 rounded-card border border-slate-200 bg-white p-4">
+            <p className="text-sm text-slate-600">
+              Nie znaleźliśmy „{needle}" w wykazie. Możesz dodać ten lek sam — nie
+              pokażemy wtedy refundacji.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                onPick(manualMedication(needle));
+                setQuery("");
+              }}
+              className="inline-flex min-h-11 items-center self-start rounded-field border border-brand-600 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
+            >
+              Dodaj „{needle}"
+            </button>
+          </div>
+        )}
     </div>
   );
 }

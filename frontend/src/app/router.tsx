@@ -54,6 +54,16 @@ export const router = createBrowserRouter([
         },
       },
       {
+        path: "karta",
+        lazy: async () => {
+          const [{ DoctorCardPage }, { doctorCardLoader }] = await Promise.all([
+            import("@/pages/DoctorCardPage"),
+            import("@/pages/doctorCardLoader"),
+          ]);
+          return { Component: DoctorCardPage, loader: doctorCardLoader };
+        },
+      },
+      {
         path: "sor",
         lazy: async () => {
           const { SorPage } = await import("@/pages/SorPage");

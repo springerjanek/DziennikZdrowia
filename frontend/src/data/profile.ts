@@ -21,6 +21,10 @@ function toApiSex(sex: Sex): "FEMALE" | "MALE" {
   }
 }
 
+export function fetchProfile(signal?: AbortSignal): Promise<SavedProfile> {
+  return apiJson("/api/me/profile", profileSchema, { signal });
+}
+
 export function saveProfile(profile: HealthProfile): Promise<SavedProfile> {
   return apiJson("/api/me/profile", profileSchema, {
     method: "PUT",

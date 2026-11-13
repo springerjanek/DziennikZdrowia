@@ -11,7 +11,7 @@ export function DashboardLayout() {
 
   return (
     <div className="min-h-screen sm:flex">
-      <aside className="border-b border-slate-200 bg-white px-4 py-3 sm:sticky sm:top-0 sm:h-screen sm:w-56 sm:shrink-0 sm:border-r sm:border-b-0 sm:px-3 sm:py-6">
+      <aside className="border-b border-slate-200 bg-white px-4 py-3 sm:sticky sm:top-0 sm:h-screen sm:w-56 sm:shrink-0 sm:border-r sm:border-b-0 sm:px-3 sm:py-6 print:hidden">
         <p className="mb-4 hidden px-3 font-semibold text-brand-700 sm:block">
           Dziennik Zdrowia
         </p>
@@ -20,13 +20,17 @@ export function DashboardLayout() {
 
       <div className="min-w-0 flex-1">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8">
-          <DashboardHeader user={user} />
+          <div className="print:hidden">
+            <DashboardHeader user={user} />
+          </div>
 
           <main className="min-w-0">
             <Outlet />
           </main>
 
-          <MedicalDisclaimer />
+          <div className="print:hidden">
+            <MedicalDisclaimer />
+          </div>
         </div>
       </div>
     </div>

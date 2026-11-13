@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { longDateLabel } from "./plan";
 
 export const ruleSourceSchema = z.enum(["PROGRAM_NFZ", "RECOMMENDATION"]);
 
@@ -28,14 +29,8 @@ export const dueScreeningSchema = z.object({
 
 export type DueScreening = z.infer<typeof dueScreeningSchema>;
 
-// Z czesci daty, nie przez new Date(iso) - to parsuje sie jako UTC i potrafi cofnac dzien.
 export function formatScreeningDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString("pl-PL", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  return longDateLabel(isoDate);
 }
 
 export function describeDue(screening: DueScreening): string {

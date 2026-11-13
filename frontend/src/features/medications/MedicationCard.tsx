@@ -1,27 +1,42 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useRevalidator } from "react-router";
+import { PharmacyLink } from "@/components/PharmacyLink";
 import { deleteUserMedication } from "@/data/userMedications";
 import {
   describeSchedule,
   formatDose,
   formatReimbursementCost,
   formatDoseTime,
+  freeForUser,
+  type EntitlementCode,
+  type Savings,
   reimbursementLabel,
   type UserMedication,
 } from "@/domain";
+import { CheaperOption } from "./CheaperOption";
+import { PrescriptionReminder } from "./PrescriptionReminder";
+import { ReimbursementExplainer } from "./ReimbursementExplainer";
 
 type MedicationCardProps = {
   medication: UserMedication;
+  entitlements: EntitlementCode[];
+  savings: Savings | null;
   onEdit: () => void;
 };
 
-export function MedicationCard({ medication, onEdit }: MedicationCardProps) {
+export function MedicationCard({
+  medication,
+  entitlements,
+  savings,
+  onEdit,
+}: MedicationCardProps) {
   const revalidator = useRevalidator();
   // Dwa klikniecia zamiast okienka z potwierdzeniem, tak samo jak w historii badan.
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const cost = formatReimbursementCost(medication.reimbursement);
+  const free = freeForUser(medication.reimbursement, entitlements);
+  const cost = free ? null : formatReimbursementCost(medication.reimbursement);
 
   function remove(): void {
     setError(null);
@@ -106,10 +121,34 @@ export function MedicationCard({ medication, onEdit }: MedicationCardProps) {
         <p className="text-sm text-slate-500">{medication.notes}</p>
       )}
 
-      <p className="text-sm text-slate-500">
-        Odpłatność: {reimbursementLabel(medication.reimbursement.level)}
-        {cost !== null && ` — ${cost}`}
-      </p>
+      <ReimbursementExplainer
+        reimbursement={medication.reimbursement}
+        entitlements={entitlements}
+      >
+        Odpłatność:{" "}
+        {free ? (
+          <span className="font-semibold text-success-700">
+            bezpłatnie dla Ciebie
+          </span>
+        ) : (
+          <>
+            {reimbursementLabel(medication.reimbursement.level)}
+            {cost !== null && ` — ${cost}`}
+          </>
+        )}
+      </ReimbursementExplainer>
+
+      {savings !== null && !free && (
+        <CheaperOption medicationName={medication.name} savings={savings} />
+      )}
+
+      <PharmacyLink name={medication.name} note={false} />
+
+      {/* GTIN maja tylko leki z wykazu refundacyjnego, czyli na recepte.
+          Przy leku dopisanym recznie nie wiemy, czy recepta jest potrzebna. */}
+      {medication.gtin !== null && (
+        <PrescriptionReminder medicationName={medication.name} />
+      )}
 
       {error !== null && (
         <p role="alert" className="text-sm text-danger-600">
