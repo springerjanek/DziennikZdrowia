@@ -1,14 +1,23 @@
-import { Plus } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { useState } from "react";
 import { useLoaderData, useRevalidator } from "react-router";
 import { recordScreening, type UserScreening } from "@/data/screeningHistory";
-import { toIsoDate } from "@/domain";
+import { formatScreeningDate, toIsoDate } from "@/domain";
 import { DocumentMock } from "@/features/plan/DocumentMock";
+import { Modal } from "@/components/Modal";
+import { HistoryDetails } from "@/features/plan/HistoryDetails";
 import { HistoryEntry } from "@/features/plan/HistoryEntry";
+import { HistoryFilters } from "@/features/plan/HistoryFilters";
+import { ANY, filterHistory } from "@/features/plan/historyFilter";
 import type { historyLoader } from "./historyLoader";
 
 const FIELD =
   "min-h-11 rounded-field border border-slate-300 bg-white px-3 py-2 text-sm";
+
+type Saved = {
+  label: string;
+  performedOn: string;
+};
 
 type Year = {
   year: string;
@@ -43,14 +52,21 @@ export function HistoryPage() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<Saved | null>(null);
+  const [filterRule, setFilterRule] = useState(ANY);
+  const [filterYear, setFilterYear] = useState(ANY);
+  const [picked, setPicked] = useState<UserScreening | null>(null);
 
   function save(): void {
+    const label = rules.find((rule) => rule.id === ruleId)?.label ?? "";
     setSaving(true);
     setError(null);
+    setSaved(null);
     recordScreening(ruleId, performedOn, notes.trim() === "" ? null : notes)
       .then(() => {
         setNotes("");
         setSaving(false);
+        setSaved({ label, performedOn });
         void revalidator.revalidate();
       })
       .catch(() => {
@@ -59,7 +75,8 @@ export function HistoryPage() {
       });
   }
 
-  const years = byYear(history);
+  const visible = filterHistory(history, filterRule, filterYear);
+  const years = byYear(visible);
 
   return (
     <section className="flex flex-col gap-6">
@@ -85,7 +102,10 @@ export function HistoryPage() {
           <select
             id="rule"
             value={ruleId}
-            onChange={(event) => setRuleId(event.target.value)}
+            onChange={(event) => {
+              setRuleId(event.target.value);
+              setSaved(null);
+            }}
             className={FIELD}
           >
             {rules.map((rule) => (
@@ -105,7 +125,10 @@ export function HistoryPage() {
             type="date"
             value={performedOn}
             max={today}
-            onChange={(event) => setPerformedOn(event.target.value)}
+            onChange={(event) => {
+              setPerformedOn(event.target.value);
+              setSaved(null);
+            }}
             className={`${FIELD} self-start`}
           />
         </div>
@@ -125,14 +148,30 @@ export function HistoryPage() {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={saving || ruleId === ""}
-          className="inline-flex min-h-11 items-center gap-2 self-start rounded-field bg-brand-600 px-4 py-2 font-semibold text-white hover:bg-brand-700 disabled:bg-slate-300"
-        >
-          <Plus aria-hidden="true" className="size-5" />
-          {saving ? "Zapisuję…" : "Dodaj do historii"}
-        </button>
+        <div className="flex min-h-11 flex-wrap items-center gap-3">
+          <button
+            type="submit"
+            disabled={saving || ruleId === ""}
+            aria-busy={saving}
+            className="inline-flex min-h-11 items-center gap-2 rounded-field bg-brand-600 px-4 py-2 font-semibold text-white hover:bg-brand-700 disabled:bg-slate-300"
+          >
+            <Plus aria-hidden="true" className="size-5" />
+            Dodaj do historii
+          </button>
+
+          {saved !== null && (
+            <p
+              role="status"
+              className="flex items-center gap-2 text-sm text-success-700"
+            >
+              <Check aria-hidden="true" className="size-5 shrink-0" />
+              <span>
+                Dodano: <strong>{saved.label}</strong>,{" "}
+                {formatScreeningDate(saved.performedOn)}
+              </span>
+            </p>
+          )}
+        </div>
 
         {error !== null && (
           <p role="alert" className="text-sm text-danger-600">
@@ -141,12 +180,26 @@ export function HistoryPage() {
         )}
       </form>
 
-      <DocumentMock />
+      {history.length > 1 && (
+        <HistoryFilters
+          history={history}
+          rule={filterRule}
+          year={filterYear}
+          onRule={setFilterRule}
+          onYear={setFilterYear}
+        />
+      )}
 
-      {years.length === 0 ? (
+      {history.length === 0 && (
         <p className="text-slate-600">
-          Nie masz tu jeszcze żadnych badań. Dopisz je powyżej albo zaznacz
-          jako zrobione na stronie z kalendarzem.
+          Nie masz tu jeszcze żadnych badań. Dopisz je powyżej albo zaznacz jako
+          zrobione na stronie z kalendarzem.
+        </p>
+      )}
+
+      {history.length > 0 && years.length === 0 ? (
+        <p className="text-slate-600">
+          Żadne badanie nie pasuje do wybranych filtrów.
         </p>
       ) : (
         years.map((group) => (
@@ -156,11 +209,22 @@ export function HistoryPage() {
             </h2>
             <ul className="flex flex-col gap-2 rounded-card border border-slate-200 bg-white p-4">
               {group.entries.map((entry) => (
-                <HistoryEntry key={entry.id} entry={entry} />
+                <HistoryEntry
+                  key={entry.id}
+                  entry={entry}
+                  onOpen={() => setPicked(entry)}
+                />
               ))}
             </ul>
           </section>
         ))
+      )}
+      <DocumentMock />
+
+      {picked !== null && (
+        <Modal title={picked.ruleLabel} onClose={() => setPicked(null)}>
+          <HistoryDetails entry={picked} onDeleted={() => setPicked(null)} />
+        </Modal>
       )}
     </section>
   );
