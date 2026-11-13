@@ -38,6 +38,9 @@ export function EditMedicationDialog({
     name: medication.name,
     activeSubstance: medication.activeSubstance,
     packSize: null,
+    // Zapisany lek nie niesie ceny ani ATC na wierzchu - cena jest przy wskazaniach.
+    retailPrice: null,
+    atc: null,
     reimbursement: medication.reimbursement,
   };
 

@@ -23,10 +23,11 @@ export function fetchScreeningHistory(
 export function recordScreening(
   ruleId: string,
   performedOn: string,
+  notes: string | null = null,
 ): Promise<UserScreening> {
   return apiJson("/api/me/screenings", userScreeningSchema, {
     method: "POST",
-    body: { ruleId, performedOn, notes: null },
+    body: { ruleId, performedOn, notes },
   });
 }
 

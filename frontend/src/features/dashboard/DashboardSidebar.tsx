@@ -3,6 +3,8 @@ import { NavLink } from "react-router";
 const LINKS = [
   { to: "/dashboard", label: "Profilaktyka", end: true },
   { to: "/dashboard/leki", label: "Leki", end: false },
+  { to: "/dashboard/historia", label: "Historia badań", end: false },
+  { to: "/dashboard/sor", label: "Kolejki na SOR", end: false },
   { to: "/dashboard/ustawienia", label: "Ustawienia", end: false },
 ];
 
