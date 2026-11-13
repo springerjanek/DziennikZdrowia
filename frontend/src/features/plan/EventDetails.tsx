@@ -6,6 +6,7 @@ import {
   describeSchedule,
   formatDose,
   formatDoseTime,
+  formatReimbursementCost,
   formatScreeningDate,
   fullDateLabel,
   type PlanEvent,
@@ -49,6 +50,11 @@ const editLinkClassName =
   "inline-flex min-h-11 items-center self-start rounded-field border border-slate-300 px-4 py-2 font-medium text-slate-700 hover:bg-slate-100";
 
 export function EventDetails({ event }: Props) {
+  const cost =
+    event.kind === "dose" || event.kind === "asNeeded"
+      ? formatReimbursementCost(event.medication.reimbursement)
+      : null;
+
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-slate-600">{fullDateLabel(event.day)}</p>
@@ -68,6 +74,7 @@ export function EventDetails({ event }: Props) {
             <Field label="Jak często">
               {describeSchedule(event.medication)}
             </Field>
+            {cost !== null && <Field label="Odpłatność">{cost}</Field>}
             {event.medication.notes !== null && (
               <Field label="Twoja notatka">{event.medication.notes}</Field>
             )}

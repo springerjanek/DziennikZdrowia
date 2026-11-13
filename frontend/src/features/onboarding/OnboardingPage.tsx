@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import { MedicalDisclaimer } from "@/components/MedicalDisclaimer";
-import { useNavigate } from "react-router";
+import { useLoaderData, useNavigate } from "react-router";
 import { ProgressBar } from "./ProgressBar";
 import { StepConditions } from "./steps/StepConditions";
 import { StepCycle } from "./steps/StepCycle";
@@ -16,9 +16,11 @@ import {
 } from "./draft";
 import { canLeaveStep, STEP_TITLES, stepsFor } from "./stepFlow";
 import { loadDraft, saveDraft } from "@/lib/draftStorage";
+import type { onboardingLoader } from "@/pages/onboardingLoader";
 
 export function OnboardingPage() {
   const navigate = useNavigate();
+  const rules = useLoaderData<typeof onboardingLoader>();
   const [draft, setDraft] = useState<OnboardingDraft>(loadDraft);
   const [stepIndex, setStepIndex] = useState(0);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -29,7 +31,7 @@ export function OnboardingPage() {
   const currentStep = steps[safeIndex];
   const isLastStep = safeIndex === steps.length - 1;
 
-  const count = recommendationCount(draft);
+  const count = recommendationCount(draft, rules);
   const profileComplete = draftToProfile(draft) !== null;
   const canContinue = canLeaveStep(currentStep, draft);
 

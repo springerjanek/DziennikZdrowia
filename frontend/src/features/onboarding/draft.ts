@@ -4,6 +4,7 @@ import {
   DEFAULT_CYCLE_LENGTH_DAYS,
   entitlements,
   evaluate,
+  type ScreeningRule,
   MAX_CYCLE_LENGTH_DAYS,
   medicationEntrySchema,
   medicationKey,
@@ -95,12 +96,15 @@ export function draftToProfile(draft: OnboardingDraft): HealthProfile | null {
   };
 }
 
-export function recommendationCount(draft: OnboardingDraft): number {
+export function recommendationCount(
+  draft: OnboardingDraft,
+  rules: ScreeningRule[],
+): number {
   const profile = draftToProfile(draft);
   if (profile === null) {
     return 0;
   }
-  return evaluate(profile).length;
+  return evaluate(profile, rules).length;
 }
 
 export function toggleCondition(

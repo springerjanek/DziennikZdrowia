@@ -4,10 +4,11 @@ export const router = createBrowserRouter([
   {
     path: "/",
     lazy: async () => {
-      const { OnboardingPage } = await import(
-        "@/features/onboarding/OnboardingPage"
-      );
-      return { Component: OnboardingPage };
+      const [{ OnboardingPage }, { onboardingLoader }] = await Promise.all([
+        import("@/features/onboarding/OnboardingPage"),
+        import("@/pages/onboardingLoader"),
+      ]);
+      return { Component: OnboardingPage, loader: onboardingLoader };
     },
   },
   {
@@ -40,6 +41,23 @@ export const router = createBrowserRouter([
             Component: DashboardHomePage,
             loader: dashboardHomeLoader,
           };
+        },
+      },
+      {
+        path: "historia",
+        lazy: async () => {
+          const [{ HistoryPage }, { historyLoader }] = await Promise.all([
+            import("@/pages/HistoryPage"),
+            import("@/pages/historyLoader"),
+          ]);
+          return { Component: HistoryPage, loader: historyLoader };
+        },
+      },
+      {
+        path: "sor",
+        lazy: async () => {
+          const { SorPage } = await import("@/pages/SorPage");
+          return { Component: SorPage };
         },
       },
       {
