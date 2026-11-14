@@ -91,3 +91,8 @@ app:
     api-url: https://kolejkisor.pl/api/public
     api-key: ${SOR_API_KEY:}
     api-secret: ${SOR_API_SECRET:}
+  # Chatbot
+  chat:
+    api-url: https://generativelanguage.googleapis.com/v1beta
+    api-key: ${GEMINI_API_KEY:}
+    model: ${GEMINI_MODEL:gemini-flash-lite-latest}

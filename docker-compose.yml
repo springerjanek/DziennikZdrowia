@@ -33,6 +33,8 @@ services:
       # Kolejki SOR z kolejkisor.pl. Puste = strona SOR pokazuje tylko numer 112.
       SOR_API_KEY: ${SOR_API_KEY:-}
       SOR_API_SECRET: ${SOR_API_SECRET:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-lite-latest}
     ports:
       - "8080:8080"
     depends_on:
